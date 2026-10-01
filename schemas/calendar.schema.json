@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nng2n8d7r4-lab/spx-1dte/schemas/calendar.schema.json",
+  "title": "SPX 1DTE macro calendar",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generated_at",
+    "source",
+    "status",
+    "cross_checked",
+    "today",
+    "tomorrow",
+    "flags",
+    "notes"
+  ],
+  "properties": {
+    "generated_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "source": {
+      "enum": [
+        "forexfactory.com",
+        "official",
+        "mixed"
+      ]
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "partial",
+        "unavailable"
+      ]
+    },
+    "cross_checked": {
+      "type": "boolean",
+      "description": "true only if both big_macro flags were verified against bls.gov (CPI/PPI/NFP) and federalreserve.gov (FOMC decisions, Chair speeches) for both today and tomorrow"
+    },
+    "today": {
+      "$ref": "#/$defs/day"
+    },
+    "tomorrow": {
+      "$ref": "#/$defs/day"
+    },
+    "flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "big_macro_today",
+        "big_macro_tomorrow",
+        "megacap_earnings_today_after_close",
+        "shortened_session_or_holiday"
+      ],
+      "properties": {
+        "big_macro_today": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "big_macro_tomorrow": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "megacap_earnings_today_after_close": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "shortened_session_or_holiday": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "hhmm": {
+      "type": "string",
+      "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+    },
+    "day": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "date",
+        "events"
+      ],
+      "properties": {
+        "date": {
+          "type": "string",
+          "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/event"
+          }
+        }
+      }
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "time_et",
+        "time_cet",
+        "title",
+        "title_cs",
+        "impact",
+        "forecast",
+        "previous"
+      ],
+      "properties": {
+        "time_et": {
+          "$ref": "#/$defs/hhmm"
+        },
+        "time_cet": {
+          "$ref": "#/$defs/hhmm"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title_cs": {
+          "type": "string",
+          "minLength": 1
+        },
+        "impact": {
+          "enum": [
+            "high",
+            "medium"
+          ]
+        },
+        "forecast": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "previous": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "flags": {
+            "properties": {
+              "big_macro_today": {
+                "type": "boolean"
+              },
+              "big_macro_tomorrow": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}
