@@ -1225,7 +1225,10 @@
     const earn = pickFlag(data, ["megacap_earnings_today_after_close", "megacap_earnings_today"]);
     const sess = pickFlag(data, ["shortened_session_or_holiday", "shortened_session"]);
     let stamp = "";
-    if (Number.isFinite(gen)) stamp = zoneParts(new Date(gen)).time;
+    if (Number.isFinite(gen)) {
+      const z = zoneParts(new Date(gen));
+      stamp = z.time + " " + z.abbr;
+    }
     return {
       trusted: reasons.length === 0,
       reasons: reasons,
@@ -1243,7 +1246,7 @@
     input.checked = !!checked;
     if (row) row.classList.toggle("manual", kind === "manual");
     const mark = row ? row.querySelector(".autoMark") : null;
-    if (mark) mark.textContent = kind === "auto" && stamp ? "(automaticky z kalendáře, bot v " + stamp + ")" : "";
+    if (mark) mark.textContent = kind === "auto" && stamp ? "(automaticky z kalendáře, vytvořeno v " + stamp + ")" : "";
   }
 
   function paintCalendarEvents(data, abbr) {
@@ -1702,6 +1705,9 @@
     const trueFlag = calendarDecision(calendarSample({
       flags: { big_macro_tomorrow: true, megacap_earnings_today_after_close: null }
     }), now);
+    const partial = calendarDecision(calendarSample({ status: "partial" }), now);
+    const nyMismatch = calendarDecision(calendarSample({ today: { date: "2026-09-30", events: [] } }), now);
+    const bothFalse = calendarDecision(calendarSample({ generated_at: "2026-10-01T05:02:00Z" }), now);
     const checks = [
       ["call", s && s.call === 7795, s && s.call],
       ["put", s && s.put === 7610, s && s.put],
@@ -1715,12 +1721,15 @@
       ["cal-stale", !stale.trusted && stale.reasons.some((r) => r.indexOf("10 hodin") >= 0), stale.reasons.join(" | ")],
       ["cal-null", !nullFlag.trusted && nullFlag.reasons.some((r) => r.indexOf("Příznak") >= 0) && nullFlag.reasons.length === 1, nullFlag.reasons.join(" | ")],
       ["cal-unverified", !unverified.trusted && unverified.reasons.some((r) => r.indexOf("není ověřen") >= 0) && unverified.reasons.length === 1, unverified.reasons.join(" | ")],
-      ["cal-true", trueFlag.trusted === true && trueFlag.bigTomorrow === true && trueFlag.bigToday === false && trueFlag.earn === null && trueFlag.stamp === "15:00", JSON.stringify(trueFlag)]
+      ["cal-true", trueFlag.trusted === true && trueFlag.bigTomorrow === true && trueFlag.bigToday === false && trueFlag.earn === null && trueFlag.stamp === "15:00 SELČ", JSON.stringify(trueFlag)],
+      ["cal-partial", !partial.trusted && partial.reasons.some((r) => r.indexOf("není v pořádku") >= 0), partial.reasons.join(" | ")],
+      ["cal-ny", !nyMismatch.trusted && nyMismatch.reasons.some((r) => r.indexOf("newyorský") >= 0) && nyMismatch.reasons.length === 1, nyMismatch.reasons.join(" | ")],
+      ["cal-both-false", bothFalse.trusted === true && bothFalse.bigToday === false && bothFalse.bigTomorrow === false && bothFalse.stamp === "07:02 SELČ", JSON.stringify(bothFalse)]
     ];
     return {
       ok: checks.every((c) => c[1]),
       checks: checks,
-      calendar: { stale: stale, nullFlag: nullFlag, unverified: unverified, trueFlag: trueFlag }
+      calendar: { stale: stale, nullFlag: nullFlag, unverified: unverified, trueFlag: trueFlag, partial: partial, nyMismatch: nyMismatch, bothFalse: bothFalse }
     };
   }
 
