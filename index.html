@@ -193,6 +193,13 @@
     padding: 6px 0;
   }
   .check input { width: 22px; height: 22px; min-height: 22px; flex: none; accent-color: var(--accent); }
+  .check.manual {
+    background: var(--manual-bg);
+    box-shadow: inset 0 0 0 1px var(--manual);
+    border-radius: 10px;
+    padding: 6px 8px;
+  }
+  .autoMark { display: block; color: var(--muted); font-size: 0.82rem; font-weight: 400; }
   .factor { padding: 10px 0; border-top: 1px solid var(--line); }
   .factor:first-of-type { border-top: 0; }
   .factor h3 { font-size: 0.98rem; margin: 0 0 8px; font-weight: 700; }
@@ -323,14 +330,14 @@
   <section>
     <h2>2. Kalendář a stopky (dnes i zítra)</h2>
     <p id="calNote" class="note"></p>
-    <label class="check"><input type="checkbox" id="stopToday"> Velké makro DNES: rozhodnutí nebo projev FEDu, CPI, PPI, NFP</label>
-    <label class="check"><input type="checkbox" id="stopTomorrow"> Velké makro ZÍTRA: rozhodnutí nebo projev FEDu, CPI, PPI, NFP</label>
-    <label class="check"><input type="checkbox" id="stopEarnings"> Earnings megacapů po zavření dnes</label>
+    <label class="check" id="rowStopToday"><input type="checkbox" id="stopToday"><span>Velké makro DNES: rozhodnutí nebo projev FEDu, CPI, PPI, NFP <span class="autoMark"></span></span></label>
+    <label class="check" id="rowStopTomorrow"><input type="checkbox" id="stopTomorrow"><span>Velké makro ZÍTRA: rozhodnutí nebo projev FEDu, CPI, PPI, NFP <span class="autoMark"></span></span></label>
+    <label class="check manual" id="rowStopEarnings"><input type="checkbox" id="stopEarnings"><span>Earnings megacapů po zavření dnes <span class="autoMark"></span></span></label>
     <p class="rule">NVDA, AAPL, MSFT, AMZN, GOOGL, META, TSLA.</p>
-    <label class="check"><input type="checkbox" id="stopSession"> Zkrácená seance nebo svátek</label>
-    <label class="check"><input type="checkbox" id="confToday"> Dnes žádná velká makra (zkontroloval jsem kalendář)</label>
-    <label class="check"><input type="checkbox" id="confTomorrow"> Zítra žádná velká makra (zkontroloval jsem kalendář)</label>
-    <p class="rule">Zaškrtnutá stopka = verdikt Neobchodovat. Než potvrdíš obě věty o makru, je verdikt Zkontroluj kalendář.</p>
+    <label class="check manual" id="rowStopSession"><input type="checkbox" id="stopSession"><span>Zkrácená seance nebo svátek <span class="autoMark"></span></span></label>
+    <label class="check manual" id="rowConfToday"><input type="checkbox" id="confToday"><span>Dnes žádná velká makra (zkontroloval jsem kalendář) <span class="autoMark"></span></span></label>
+    <label class="check manual" id="rowConfTomorrow"><input type="checkbox" id="confTomorrow"><span>Zítra žádná velká makra (zkontroloval jsem kalendář) <span class="autoMark"></span></span></label>
+    <p class="rule">Zaškrtnutá stopka = verdikt Neobchodovat. Než jsou obě věty o makru zaškrtnuté, je verdikt Zkontroluj kalendář.</p>
     <ul id="events"></ul>
   </section>
 
@@ -1184,29 +1191,134 @@
     return msgs;
   }
 
-  function applyCalendar(data) {
-    const msgs = [];
-    const age = Date.now() - Date.parse(data.generated_at || "");
-    const fresh = data.status === "ok" && Number.isFinite(age) && age >= 0 && age <= 24 * 3600 * 1000 && pragueYmd(new Date(data.generated_at)) === pragueYmd(new Date());
-    if (!Number.isFinite(age) || age > 24 * 3600 * 1000) msgs.push("Kalendář je starší než 24 hodin.");
-    if (fresh) {
-      $("stopToday").checked = !!data.macro_today;
-      $("stopTomorrow").checked = !!data.macro_tomorrow;
-      $("stopEarnings").checked = !!data.megacap_earnings_today;
-      $("stopSession").checked = !!data.shortened_session;
-      msgs.push("Kalendář je z dneška. Stopky jsou předvyplněné, potvrzení makra pořád musíš zaškrtnout.");
-    } else if (data.status !== "ok") {
-      msgs.push("Kalendář není v pořádku. Stopky zaškrtni ručně.");
+  function isBool(v) { return v === true || v === false; }
+
+  function pickFlag(data, keys) {
+    const bags = [];
+    if (data && data.flags && typeof data.flags === "object") bags.push(data.flags);
+    if (data && typeof data === "object") bags.push(data);
+    for (let b = 0; b < bags.length; b++) {
+      for (let i = 0; i < keys.length; i++) {
+        if (Object.prototype.hasOwnProperty.call(bags[b], keys[i])) return bags[b][keys[i]];
+      }
     }
-    if (data.sample) msgs.push("Soubor kalendáře je ukázka, ne živý zdroj. Ověř ho a pak teprve potvrď.");
+    return undefined;
+  }
+
+  function calendarDecision(data, now) {
+    const moment = now || new Date();
+    const reasons = [];
+    if (!data || data.status !== "ok") reasons.push("Kalendář není v pořádku, potvrď ručně.");
+    if (!data || data.cross_checked !== true) reasons.push("Kalendář není ověřen, potvrď ručně.");
+    const gen = data ? Date.parse(data.generated_at || "") : NaN;
+    const age = moment.getTime() - gen;
+    if (!Number.isFinite(gen)) reasons.push("Kalendář nemá čas, potvrď ručně.");
+    else if (age < -2 * 60 * 1000) reasons.push("Kalendář má čas v budoucnosti, potvrď ručně.");
+    else if (age > 10 * 3600 * 1000) reasons.push("Kalendář je starší než 10 hodin, potvrď ručně.");
+    else if (pragueYmd(new Date(gen)) !== pragueYmd(moment)) reasons.push("Kalendář není z dneška, potvrď ručně.");
+    const ny = nyDate(moment);
+    const todayDate = data && data.today ? data.today.date : undefined;
+    if (todayDate !== ny) reasons.push("Datum v kalendáři nesedí na dnešní newyorský den, potvrď ručně.");
+    const bigToday = pickFlag(data, ["big_macro_today"]);
+    const bigTomorrow = pickFlag(data, ["big_macro_tomorrow"]);
+    if (!isBool(bigToday) || !isBool(bigTomorrow)) reasons.push("Příznak velkého makra chybí, potvrď ručně.");
+    const earn = pickFlag(data, ["megacap_earnings_today_after_close", "megacap_earnings_today"]);
+    const sess = pickFlag(data, ["shortened_session_or_holiday", "shortened_session"]);
+    let stamp = "";
+    if (Number.isFinite(gen)) stamp = zoneParts(new Date(gen)).time;
+    return {
+      trusted: reasons.length === 0,
+      reasons: reasons,
+      bigToday: bigToday,
+      bigTomorrow: bigTomorrow,
+      earn: earn,
+      sess: sess,
+      stamp: stamp
+    };
+  }
+
+  function setCheck(id, checked, kind, stamp) {
+    const input = $(id);
+    const row = input.closest(".check");
+    input.checked = !!checked;
+    if (row) row.classList.toggle("manual", kind === "manual");
+    const mark = row ? row.querySelector(".autoMark") : null;
+    if (mark) mark.textContent = kind === "auto" && stamp ? "(automaticky z kalendáře, bot v " + stamp + ")" : "";
+  }
+
+  function paintCalendarEvents(data, abbr) {
     const ul = $("events");
     ul.innerHTML = "";
-    (data.events || []).forEach((ev) => {
+    function add(text) {
       const li = document.createElement("li");
-      li.textContent = (ev.name || "") + (ev.name_cs ? " — " + ev.name_cs : "");
+      li.textContent = text;
       ul.appendChild(li);
+    }
+    function lines(list, heading) {
+      const rows = list || [];
+      if (!rows.length) {
+        add(heading + ": žádná položka.");
+        return;
+      }
+      add(heading);
+      rows.forEach((ev) => {
+        const title = ev.title_cs || ev.name_cs || ev.title || ev.name || "událost";
+        const time = ev.time_cet || ev.time || "";
+        add((time ? time + (abbr ? " " + abbr : "") + " — " : "") + title);
+      });
+    }
+    if (data && (data.today || data.tomorrow)) {
+      lines(data.today && data.today.events, "Dnes");
+      lines(data.tomorrow && data.tomorrow.events, "Zítra");
+      return;
+    }
+    (data && data.events || []).forEach((ev) => {
+      const title = ev.name_cs || ev.title_cs || "";
+      const name = ev.name || ev.title || "";
+      add(name + (title ? " — " + title : ""));
     });
+  }
+
+  function applyCalendar(data, now) {
+    if (!data) {
+      setCheck("stopToday", false, "idle", "");
+      setCheck("stopTomorrow", false, "idle", "");
+      setCheck("stopEarnings", false, "manual", "");
+      setCheck("stopSession", false, "manual", "");
+      setCheck("confToday", false, "manual", "");
+      setCheck("confTomorrow", false, "manual", "");
+      paintCalendarEvents(null, "");
+      const miss = ["Kalendář se nepodařilo načíst. Potvrď ručně."];
+      $("calNote").textContent = miss.join(" ");
+      recalc();
+      return miss;
+    }
+    const decision = calendarDecision(data, now);
+    const msgs = decision.reasons.slice();
+    if (!decision.trusted) {
+      setCheck("stopToday", false, "idle", "");
+      setCheck("stopTomorrow", false, "idle", "");
+      setCheck("stopEarnings", false, "manual", "");
+      setCheck("stopSession", false, "manual", "");
+      setCheck("confToday", false, "manual", "");
+      setCheck("confTomorrow", false, "manual", "");
+    } else {
+      const stamp = decision.stamp;
+      setCheck("stopToday", decision.bigToday === true, "auto", stamp);
+      setCheck("confToday", decision.bigToday === false, "auto", stamp);
+      setCheck("stopTomorrow", decision.bigTomorrow === true, "auto", stamp);
+      setCheck("confTomorrow", decision.bigTomorrow === false, "auto", stamp);
+      if (isBool(decision.earn)) setCheck("stopEarnings", decision.earn === true, "auto", stamp);
+      else setCheck("stopEarnings", false, "manual", "");
+      if (isBool(decision.sess)) setCheck("stopSession", decision.sess === true, "auto", stamp);
+      else setCheck("stopSession", false, "manual", "");
+      msgs.push("Kalendář je ověřený. Zaškrtnutí je z bota v " + stamp + ".");
+    }
+    if (data && data.sample) msgs.push("Soubor kalendáře je ukázka, ne živý zdroj. Ověř ho a pak teprve potvrď.");
+    const abbr = data && Number.isFinite(Date.parse(data.generated_at || "")) ? zoneParts(new Date(data.generated_at)).abbr : "";
+    paintCalendarEvents(data, abbr);
     $("calNote").textContent = msgs.join(" ");
+    recalc();
     return msgs;
   }
 
@@ -1303,7 +1415,7 @@
     } else {
       msgs.push.apply(msgs, applyMarket(m.data));
     }
-    if (!c.ok) msgs.push("Kalendář se nepodařilo načíst. Stopky zaškrtni ručně.");
+    if (!c.ok) msgs.push.apply(msgs, applyCalendar(null));
     else msgs.push.apply(msgs, applyCalendar(c.data));
     if (!s.ok) msgs.push.apply(msgs, applySentiment(null));
     else msgs.push.apply(msgs, applySentiment(s.data));
@@ -1408,6 +1520,12 @@
     fields.forEach((id) => { if (id !== "delta") $(id).value = ""; });
     $("delta").value = "10";
     ["stopToday", "stopTomorrow", "stopEarnings", "stopSession", "confToday", "confTomorrow"].forEach((id) => { $(id).checked = false; });
+    setCheck("stopToday", false, "idle", "");
+    setCheck("stopTomorrow", false, "idle", "");
+    setCheck("stopEarnings", false, "manual", "");
+    setCheck("stopSession", false, "manual", "");
+    setCheck("confToday", false, "manual", "");
+    setCheck("confTomorrow", false, "manual", "");
     state.bars = [];
     state.quotes = null;
     state.spxFrozen = false;
@@ -1474,7 +1592,15 @@
     $(id).addEventListener("input", () => { state.strikeTouched = true; recalc(); });
   });
   ["stopToday", "stopTomorrow", "stopEarnings", "stopSession", "confToday", "confTomorrow"].forEach((id) => {
-    $(id).addEventListener("change", recalc);
+    $(id).addEventListener("change", () => {
+      const row = $(id).closest(".check");
+      if (row) {
+        row.classList.remove("manual");
+        const mark = row.querySelector(".autoMark");
+        if (mark && mark.textContent) mark.textContent = "";
+      }
+      recalc();
+    });
   });
   $("chosen").addEventListener("change", () => { state.chosenTouched = true; });
   $("load").addEventListener("click", loadAll);
@@ -1543,6 +1669,24 @@
     }
   });
 
+  function calendarSample(over) {
+    const base = {
+      status: "ok",
+      cross_checked: true,
+      generated_at: "2026-10-01T13:00:00Z",
+      today: { date: "2026-10-01", events: [{ time_cet: "14:30", title_cs: "Žádosti o podporu v nezaměstnanosti" }] },
+      tomorrow: { date: "2026-10-02", events: [{ time_cet: "14:30", title_cs: "Změna počtu pracovních míst mimo zemědělství (NFP)" }] },
+      flags: {
+        big_macro_today: false,
+        big_macro_tomorrow: false,
+        megacap_earnings_today_after_close: false,
+        shortened_session_or_holiday: false
+      }
+    };
+    const flags = Object.assign({}, base.flags, over && over.flags);
+    return Object.assign({}, base, over, { flags: flags });
+  }
+
   function selfCheck() {
     const s = strikes(7700, 15, 10);
     const g = (7760.75 / 7803.75 - 1) * 100;
@@ -1551,6 +1695,13 @@
       { date: "2026-09-30", open: 1, high: 2, low: 1, close: 1.5 },
       { date: "2026-10-01", open: 1, high: 9, low: 1, close: 8 }
     ], "2026-10-01");
+    const now = new Date("2026-10-01T13:00:00Z");
+    const stale = calendarDecision(calendarSample({ generated_at: "2026-10-01T01:00:00Z" }), now);
+    const nullFlag = calendarDecision(calendarSample({ flags: { big_macro_tomorrow: null } }), now);
+    const unverified = calendarDecision(calendarSample({ cross_checked: false }), now);
+    const trueFlag = calendarDecision(calendarSample({
+      flags: { big_macro_tomorrow: true, megacap_earnings_today_after_close: null }
+    }), now);
     const checks = [
       ["call", s && s.call === 7795, s && s.call],
       ["put", s && s.put === 7610, s && s.put],
@@ -1560,9 +1711,17 @@
       ["f1", factorVix(16.43, 14.87) === 0],
       ["b3", biasVix(16.43, 14.87) === -1],
       ["spot", Math.abs(spot - 7700.821245) < 1e-6, spot],
-      ["drop", dropped.length === 1 && dropped[0].high === 2]
+      ["drop", dropped.length === 1 && dropped[0].high === 2],
+      ["cal-stale", !stale.trusted && stale.reasons.some((r) => r.indexOf("10 hodin") >= 0), stale.reasons.join(" | ")],
+      ["cal-null", !nullFlag.trusted && nullFlag.reasons.some((r) => r.indexOf("Příznak") >= 0) && nullFlag.reasons.length === 1, nullFlag.reasons.join(" | ")],
+      ["cal-unverified", !unverified.trusted && unverified.reasons.some((r) => r.indexOf("není ověřen") >= 0) && unverified.reasons.length === 1, unverified.reasons.join(" | ")],
+      ["cal-true", trueFlag.trusted === true && trueFlag.bigTomorrow === true && trueFlag.bigToday === false && trueFlag.earn === null && trueFlag.stamp === "15:00", JSON.stringify(trueFlag)]
     ];
-    return { ok: checks.every((c) => c[1]), checks: checks };
+    return {
+      ok: checks.every((c) => c[1]),
+      checks: checks,
+      calendar: { stale: stale, nullFlag: nullFlag, unverified: unverified, trueFlag: trueFlag }
+    };
   }
 
   window.SPX = {
@@ -1575,6 +1734,9 @@
     spotFromFrozen: spotFromFrozen,
     dropPartialBars: dropPartialBars,
     applyConnector: applyConnector,
+    applyCalendar: applyCalendar,
+    calendarDecision: calendarDecision,
+    calendarSample: calendarSample,
     recalc: recalc,
     selfCheck: selfCheck,
     snapshot: function () { return state.last; },
