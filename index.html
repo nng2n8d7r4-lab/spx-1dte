@@ -608,7 +608,7 @@
     fVal: [null, null, null, null, null, null, null],
     bVal: [null, null, null, null],
     sentiment: null,
-    sentimentLine: "Sentiment z X: nedostatek dat",
+    sentimentLine: "Sentiment z X: nedostatek dat.",
     fileStamp: "",
     filled: { gap: false, spot: false, vix: false, vixPrior: false, vix1d: false, iv: false, bars: false, macro: false },
     missing: [],
@@ -1675,16 +1675,14 @@
     const p = document.createElement("p");
     if (stale) {
       state.sentiment = { direction: null, score: null };
-      state.sentimentLine = "Sentiment z X: nedostatek dat";
+      state.sentimentLine = "Sentiment z X: nedostatek dat.";
       p.textContent = state.sentimentLine;
       box.appendChild(p);
       return data ? ["Sentiment je starší než 24 hodin, nebo není v pořádku. Skóre se nemění."] : ["Sentiment se nepodařilo načíst."];
     }
-    const word = data.direction === "bullish" ? "NAHORU" : data.direction === "bearish" ? "DOLŮ" : "NEUTRÁLNĚ";
-    const x = data.accounts_for != null ? data.accounts_for : (data.matching_accounts != null ? data.matching_accounts : "—");
-    const y = data.accounts_considered != null ? data.accounts_considered : (data.accounts_total != null ? data.accounts_total : "—");
+    const word = data.direction === "bullish" ? "nahoru" : data.direction === "bearish" ? "dolů" : "neutrálně";
     state.sentiment = { direction: data.direction, score: data.score };
-    state.sentimentLine = "Sentiment z X: SPX půjde " + word + " (" + x + " z " + y + " účtů, jistota " + confWord(data.confidence) + ").";
+    state.sentimentLine = "Sentiment z X: SPX " + word + ".";
     p.textContent = state.sentimentLine;
     box.appendChild(p);
     return [];
@@ -1846,7 +1844,7 @@
     state.esMeta = null;
     state.ivMeta = null;
     state.sentiment = null;
-    state.sentimentLine = "Sentiment z X: nedostatek dat";
+    state.sentimentLine = "Sentiment z X: nedostatek dat.";
     state.vix1dFrozen = false;
     state.calToday = [];
     state.calTomorrow = [];
