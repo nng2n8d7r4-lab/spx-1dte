@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#000000">
+<script>
+try {
+  var savedTheme = localStorage.getItem("spx1dte-theme");
+  document.documentElement.setAttribute("data-theme", savedTheme === "light" ? "light" : "dark");
+} catch (e) {
+  document.documentElement.setAttribute("data-theme", "dark");
+}
+</script>
 <title>SPX 1DTE kalkulačka</title>
 <style>
   :root {
@@ -270,6 +278,82 @@
     font-size: 0.82rem;
     margin: 18px 4px 8px;
   }
+  .theme-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+    margin: 22px 0 2px;
+    padding: 3px;
+    border-radius: 999px;
+    background: rgba(120, 120, 128, 0.32);
+    backdrop-filter: blur(22px) saturate(1.6);
+    -webkit-backdrop-filter: blur(22px) saturate(1.6);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), inset 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  }
+  .theme-switch button {
+    min-height: 44px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #f5f5f7;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.022em;
+  }
+  .theme-switch button[aria-pressed="true"] {
+    background: #fff;
+    color: #1c1c1e;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22), 0 1px 1px rgba(0, 0, 0, 0.08);
+  }
+  html[data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #1c1c1e;
+    --muted: #6e6e73;
+    --line: rgba(0, 0, 0, 0.1);
+    --auto: #0071e3;
+    --auto-bg: rgba(10, 132, 255, 0.1);
+    --auto-line: rgba(10, 132, 255, 0.45);
+    --chip: rgba(0, 0, 0, 0.05);
+    --sticky: rgba(255, 255, 255, 0.9);
+    --shadow: 0 8px 22px rgba(0, 0, 0, 0.06);
+    --glass-edge: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+    color-scheme: light;
+  }
+  html[data-theme="light"] body {
+    background: #ffffff;
+  }
+  html[data-theme="light"] input,
+  html[data-theme="light"] select,
+  html[data-theme="light"] textarea,
+  html[data-theme="light"] .opts button,
+  html[data-theme="light"] .btn,
+  html[data-theme="light"] .card {
+    background: #f5f5f7;
+    color: #1c1c1e;
+  }
+  html[data-theme="light"] label.field:has(.src.manual) input,
+  html[data-theme="light"] input.need,
+  html[data-theme="light"] select.need,
+  html[data-theme="light"] textarea.need {
+    color: #1c1c1e;
+  }
+  html[data-theme="light"] label.field:has(.src.auto) input {
+    color: #06284a;
+  }
+  html[data-theme="light"] .opts.unset button { color: #9d1c14; }
+  html[data-theme="light"] .verdict.go { color: #157a32; }
+  html[data-theme="light"] .verdict.mid { color: #8a6500; }
+  html[data-theme="light"] .verdict.stop { color: #c41c12; }
+  html[data-theme="light"] .verdict-box.go { color: #0d3d1c; }
+  html[data-theme="light"] .verdict-box.mid { color: #3d3200; }
+  html[data-theme="light"] .verdict-box.stop { color: #3d0d0a; }
+  html[data-theme="light"] .hint { color: #8a6500; }
+  html[data-theme="light"] .theme-switch {
+    background: rgba(120, 120, 128, 0.16);
+    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  }
+  html[data-theme="light"] .theme-switch button { color: #1c1c1e; }
   .export {
     width: 100%;
     min-height: 140px;
@@ -321,6 +405,9 @@
   .reasons li { margin: 2px 0; }
   @media (prefers-reduced-transparency: reduce) {
     .sticky, section, .verdict-box { backdrop-filter: none; -webkit-backdrop-filter: none; background: #1c1c1e; }
+    html[data-theme="light"] .sticky,
+    html[data-theme="light"] section,
+    html[data-theme="light"] .verdict-box { background: #ffffff; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
@@ -579,6 +666,10 @@
     <textarea id="exportBox" class="export" readonly hidden></textarea>
   </section>
 
+  <div class="theme-switch" role="group" aria-label="Pozadí">
+    <button type="button" id="themeDark" aria-pressed="true">Tmavé</button>
+    <button type="button" id="themeLight" aria-pressed="false">Světlé</button>
+  </div>
   <footer>Prahy jsou výchozí hodnoty ke kalibraci podle deníku. Není to investiční doporučení.</footer>
 </div>
 
@@ -2069,6 +2160,19 @@
     snapshot: function () { return state.last; },
     nyDate: nyDate
   };
+
+  function applyTheme(theme) {
+    const next = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", next === "light" ? "#ffffff" : "#000000");
+    $("themeDark").setAttribute("aria-pressed", next === "dark" ? "true" : "false");
+    $("themeLight").setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    try { localStorage.setItem("spx1dte-theme", next); } catch (e) {}
+  }
+  $("themeDark").addEventListener("click", function () { applyTheme("dark"); });
+  $("themeLight").addEventListener("click", function () { applyTheme("light"); });
+  applyTheme(document.documentElement.getAttribute("data-theme") || "dark");
 
   resetAll();
   renderJournal();
