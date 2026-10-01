@@ -271,7 +271,16 @@ try {
     background: rgba(0, 0, 0, 0.22);
   }
   .card h3 { margin: 0 0 4px; font-size: 1rem; }
-  a { color: var(--auto); overflow-wrap: anywhere; }
+  #events {
+    list-style: none;
+    margin: 4px 0 14px;
+    padding: 0;
+  }
+  #events li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.98rem;
+  }
   .post { margin-top: 8px; font-size: 0.95rem; }
   footer {
     color: var(--muted);
@@ -492,6 +501,7 @@ try {
   <section>
     <h2>2. Kalendář a stopky (dnes i zítra)</h2>
     <p id="calNote" class="note"></p>
+    <ul id="events"></ul>
     <label class="check" id="rowStopToday"><input type="checkbox" id="stopToday"><span>Velké makro DNES: rozhodnutí nebo projev FEDu, CPI, PPI, NFP <span class="autoMark"></span></span></label>
     <label class="check" id="rowStopTomorrow"><input type="checkbox" id="stopTomorrow"><span>Velké makro ZÍTRA: rozhodnutí nebo projev FEDu, CPI, PPI, NFP <span class="autoMark"></span></span></label>
     <label class="check manual" id="rowStopEarnings"><input type="checkbox" id="stopEarnings"><span>Earnings megacapů po zavření dnes <span class="autoMark"></span></span></label>
@@ -500,7 +510,6 @@ try {
     <label class="check manual" id="rowConfToday"><input type="checkbox" id="confToday"><span>Dnes žádná velká makra (zkontroloval jsem kalendář) <span class="autoMark"></span></span></label>
     <label class="check manual" id="rowConfTomorrow"><input type="checkbox" id="confTomorrow"><span>Zítra žádná velká makra (zkontroloval jsem kalendář) <span class="autoMark"></span></span></label>
     <p class="rule">Zaškrtnutá stopka = verdikt Neobchodovat. Než jsou obě věty o makru zaškrtnuté, je verdikt Zkontroluj kalendář.</p>
-    <ul id="events"></ul>
   </section>
 
   <section>
@@ -742,6 +751,8 @@ try {
   }
   function fmtIsoDate(iso) {
     if (!iso) return "—";
+    const compact = String(iso).match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (compact) return fmtDateParts(compact[1], compact[2], compact[3]);
     const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
     if (!m) return "—";
     return fmtDateParts(m[1], m[2], m[3]);
