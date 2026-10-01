@@ -258,6 +258,23 @@
     color: var(--manual);
     margin-left: 6px;
   }
+  .tag.auto { color: var(--muted); font-weight: 600; }
+  .src { display: block; font-size: 0.75rem; font-weight: 700; line-height: 1.3; }
+  .src.manual { color: var(--manual); }
+  .src.auto { color: var(--muted); font-weight: 600; }
+  .verdict-box {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    margin: 0 0 8px;
+    overflow-wrap: anywhere;
+  }
+  .verdict-box.go { color: var(--up); }
+  .verdict-box.mid { color: var(--warn); }
+  .verdict-box.stop { color: var(--down); }
+  .reasons { margin: 0 0 8px; padding-left: 1.15rem; }
+  .reasons li { margin: 2px 0; }
   @media (prefers-reduced-motion: reduce) {
     * { transition: none !important; }
   }
@@ -266,6 +283,8 @@
 <body>
 <div class="sticky">
   <div class="sticky-inner">
+    <p id="verdictBox" class="verdict-box mid">DNES: ZKONTROLUJ KALENDÁŘ.</p>
+    <ul id="reasonList" class="reasons"></ul>
     <p id="direction" class="direction flat">Směr se ukáže po čtyřech signálech.</p>
     <div>
       <span id="verdict" class="verdict mid">Zkontroluj kalendář</span>
@@ -289,36 +308,45 @@
     </div>
     <p id="status" class="status">Zatím nic nenačteno. Oranžové kolonky můžeš vyplnit ručně.</p>
     <label class="field">Gap ES vs. včerejší zavření (%)
+      <span class="src manual" id="srcGap">ručně</span>
       <input id="gap" inputmode="decimal" autocomplete="off" class="need" aria-label="Gap ES vs. včerejší zavření (%)">
     </label>
     <p class="note">V 15:45 SEČ je to změna proti včerejšímu zavření včetně prvních minut seance, ne čistý noční gap.</p>
     <label class="field">Aktuální cena SPX
+      <span class="src manual" id="srcSpot">ručně</span>
       <input id="spot" inputmode="decimal" autocomplete="off" class="need" aria-label="Aktuální cena SPX">
     </label>
     <p id="spotNote" class="note"></p>
     <div class="row2">
       <label class="field">VIX
+        <span class="src manual" id="srcVix">ručně</span>
         <input id="vix" inputmode="decimal" autocomplete="off" class="need" aria-label="VIX">
       </label>
       <label class="field">VIX včera
+        <span class="src manual" id="srcVixPrior">ručně</span>
         <input id="vixPrior" inputmode="decimal" autocomplete="off" class="need" aria-label="VIX včera">
       </label>
     </div>
     <label class="field">VIX1D
+      <span class="src manual" id="srcVix1d">ručně</span>
       <input id="vix1d" inputmode="decimal" autocomplete="off" class="need" aria-label="VIX1D">
     </label>
     <p id="vix1dNote" class="note"></p>
     <label class="field">IV ATM opce (%)
+      <span class="src manual" id="srcIv">ručně</span>
       <input id="iv" inputmode="decimal" autocomplete="off" class="need" aria-label="IV ATM opce (%)">
     </label>
     <label class="field">Delta short strike (10 = 10 delta)
+      <span class="src manual" id="srcDelta">ručně</span>
       <input id="delta" inputmode="decimal" autocomplete="off" class="need" value="10" aria-label="Delta short strike (10 = 10 delta)">
     </label>
     <div class="row2">
       <label class="field">Odhad short call
+        <span class="src manual" id="srcCall">ručně</span>
         <input id="shortCall" inputmode="decimal" autocomplete="off" aria-label="Odhad short call">
       </label>
       <label class="field">Odhad short put
+        <span class="src manual" id="srcPut">ručně</span>
         <input id="shortPut" inputmode="decimal" autocomplete="off" aria-label="Odhad short put">
       </label>
     </div>
@@ -405,7 +433,7 @@
         <button type="button" data-v="1">Za včerejším high/low</button>
         <button type="button" data-v="2">Za 5denním high/low</button>
       </div>
-      <p class="rule">Auto: call nad 5denním high = 2 b., nad včerejším high = 1 b., jinak 0 b. Put zrcadlově pod low. Medvědí sklon jen call, býčí jen put, jinak horší z obou.</p>
+      <p class="rule">Auto: call nad 5denním high = 2 b., nad včerejším high = 1 b., jinak 0 b. Put zrcadlově pod low. Medvědí sklon jen call, býčí jen put, jinak horší z obou. Klíčová úroveň je včerejší a pětidenní maximum a minimum.</p>
       <p class="now" id="now6"></p>
       <button type="button" class="linkish back" hidden>Zpět na výpočet</button>
     </div>
@@ -416,8 +444,9 @@
         <button type="button" data-v="1">Mírný pohyb</button>
         <button type="button" data-v="2">Klid</button>
       </div>
-      <p class="rule">Ručně: 10Y v pásmu ±5 bp, DXY ±0,4 %, ropa ±2 % = klid (2 b.). Jedna veličina mimo = 1 b., dvě a víc = 0 b.</p>
+      <p class="rule">Auto: 10Y v pásmu ±5 bp, dolar (UUP) ±0,4 %, ropa (USO) ±2 % = klid (2 b.). Jedna veličina mimo = 1 b., dvě a víc = 0 b.</p>
       <p class="now" id="now7"></p>
+      <button type="button" class="linkish back" hidden>Zpět na výpočet</button>
     </div>
   </section>
 
@@ -532,6 +561,13 @@
     fVal: [null, null, null, null, null, null, null],
     bVal: [null, null, null, null],
     sentiment: null,
+    sentimentLine: "Sentiment z X: nedostatek dat",
+    fileStamp: "",
+    filled: { gap: false, spot: false, vix: false, vixPrior: false, vix1d: false, iv: false, bars: false, macro: false },
+    missing: [],
+    macro: { us10y: null, uup: null, uso: null },
+    calToday: [],
+    calTomorrow: [],
     last: null
   };
 
@@ -550,6 +586,11 @@
     if (n == null || !Number.isFinite(n)) return "—";
     const sign = n > 0 ? "+" : "";
     return sign + n.toFixed(d).replace(".", ",") + " %";
+  }
+  function fmtBp(n) {
+    if (n == null || !Number.isFinite(n)) return "—";
+    const sign = n > 0 ? "+" : "";
+    return sign + String(n).replace(".", ",") + " bp";
   }
   function fmtPx(n, d) {
     if (n == null || !Number.isFinite(n)) return "—";
@@ -646,6 +687,16 @@
     const ratio = vix1d / vix;
     if (ratio <= 1) return 2;
     if (ratio <= 1.15) return 1;
+    return 0;
+  }
+  function factorMacro(us10y, uup, uso) {
+    if (us10y == null || uup == null || uso == null) return null;
+    let out = 0;
+    if (Math.abs(us10y) > 5) out += 1;
+    if (Math.abs(uup) > 0.4) out += 1;
+    if (Math.abs(uso) > 2) out += 1;
+    if (out === 0) return 2;
+    if (out === 1) return 1;
     return 0;
   }
   function rv5(closes) {
@@ -770,6 +821,37 @@
       btn.setAttribute("aria-pressed", String(value != null && Number(btn.dataset.v) === value));
     });
   }
+  function ibkrLabel() {
+    return state.fileStamp ? "auto (zdroj IBKR, čas " + state.fileStamp + ")" : "auto";
+  }
+  function paintTag(tag, fromFile) {
+    if (!tag) return;
+    tag.hidden = false;
+    if (fromFile) {
+      tag.textContent = ibkrLabel();
+      tag.classList.add("auto");
+    } else {
+      tag.textContent = "ručně";
+      tag.classList.remove("auto");
+    }
+  }
+  function paintSrc(id, fromFile) {
+    const el = $(id);
+    if (!el) return;
+    el.textContent = fromFile ? ibkrLabel() : "ručně";
+    el.classList.toggle("auto", !!fromFile);
+    el.classList.toggle("manual", !fromFile);
+  }
+  function missNote(names) {
+    const hit = names.filter((n) => state.missing.indexOf(n) >= 0);
+    return hit.length ? "v market.json chybí " + hit.join(", ") + "." : "";
+  }
+  function clearFilled() {
+    state.filled = { gap: false, spot: false, vix: false, vixPrior: false, vix1d: false, iv: false, bars: false, macro: false };
+    state.missing = [];
+    state.macro = { us10y: null, uup: null, uso: null };
+    state.fileStamp = "";
+  }
 
   function dirFromSum(sum) {
     if (sum >= 2) return "bullish";
@@ -793,6 +875,85 @@
     if (v === -1) return "medvědí";
     if (v === 0) return "neutrální";
     return "—";
+  }
+
+  function factorFromFile(i) {
+    const g = state.filled;
+    if (i === 0) return g.vix;
+    if (i === 1) return g.vix1d && state.vix1dLive;
+    if (i === 2) return g.iv && g.bars;
+    if (i === 3) return g.gap;
+    if (i === 4) return g.bars;
+    if (i === 5) return g.bars && g.spot && g.iv && !state.strikeTouched;
+    if (i === 6) return g.macro;
+    return false;
+  }
+  function biasFromFile(i) {
+    const g = state.filled;
+    if (i === 0) return g.gap;
+    if (i === 1) return g.spot && g.bars;
+    if (i === 2) return g.vix && g.vixPrior;
+    if (i === 3) return g.spot && g.bars;
+    return false;
+  }
+  function levelLine(k, side, lv) {
+    if (k == null || !lv) return "";
+    const name = side === "call" ? "Prodávaný call" : "Prodávaný put";
+    const px = fmtPx(k, 0);
+    if (side === "call") {
+      if (lv.high5 != null && k >= lv.high5) return name + " " + px + " je nad 5denním maximem " + fmtPx(lv.high5, 0) + " → 2 b.";
+      if (lv.prevHigh != null && k >= lv.prevHigh) return name + " " + px + " je nad včerejším maximem " + fmtPx(lv.prevHigh, 0) + " → 1 b.";
+      return name + " " + px + " je uvnitř včerejšího rozsahu → 0 b.";
+    }
+    if (lv.low5 != null && k <= lv.low5) return name + " " + px + " je pod 5denním minimem " + fmtPx(lv.low5, 0) + " → 2 b.";
+    if (lv.prevLow != null && k <= lv.prevLow) return name + " " + px + " je pod včerejším minimem " + fmtPx(lv.prevLow, 0) + " → 1 b.";
+    return name + " " + px + " je uvnitř včerejšího rozsahu → 0 b.";
+  }
+  function eventTag(list) {
+    if (!list || !list.length) return "";
+    const blob = (ev) => (ev.title_cs || "") + " " + (ev.title || "") + " " + (ev.name_cs || "") + " " + (ev.name || "");
+    const nfp = list.find((ev) => /NFP|mimo zemědělství|Non-Farm/i.test(blob(ev)));
+    const ev = nfp || list.find((e) => e.impact === "high") || list[0];
+    if (nfp) return "NFP";
+    const t = ev.title_cs || ev.name_cs || ev.title || ev.name || "";
+    return t.length > 48 ? t.slice(0, 48) : t;
+  }
+  function tradeLine(verdict, dir, score, delta, st, kCall, kPut) {
+    const wLabel = verdict === "Opatrně" ? "10" : "15–20";
+    const dlt = delta != null ? String(delta).replace(".", ",") : "—";
+    const em = st ? fmtPx(Math.round(st.em), 0) : "—";
+    const strat = stratKey(dir);
+    let legs = "";
+    if (strat === "bear_call" && kCall != null) {
+      const longTxt = verdict === "Opatrně" ? String(kCall + 10) : (kCall + 15) + "–" + (kCall + 20);
+      legs = "Short call ≈ " + kCall + " (" + dlt + " delta), long ≈ " + longTxt + " (šířka " + wLabel + ").";
+    } else if (strat === "bull_put" && kPut != null) {
+      const longTxt = verdict === "Opatrně" ? String(kPut - 10) : (kPut - 20) + "–" + (kPut - 15);
+      legs = "Short put ≈ " + kPut + " (" + dlt + " delta), long ≈ " + longTxt + " (šířka " + wLabel + ").";
+    } else if (kCall != null && kPut != null) {
+      const lc = verdict === "Opatrně" ? String(kCall + 10) : (kCall + 15) + "–" + (kCall + 20);
+      const lp = verdict === "Opatrně" ? String(kPut - 10) : (kPut - 20) + "–" + (kPut - 15);
+      legs = "Short call ≈ " + kCall + " a short put ≈ " + kPut + " (" + dlt + " delta), long call ≈ " + lc + ", long put ≈ " + lp + " (šířka " + wLabel + ").";
+    }
+    const name = strat === "bear_call" ? "BEAR CALL SPREAD" : strat === "bull_put" ? "BULL PUT SPREAD" : "IRON CONDOR";
+    const dirCs = dir === "bullish" ? "nahoru" : dir === "bearish" ? "dolů" : "neutrálně";
+    const size = verdict === "Opatrně" ? " Menší velikost." : "";
+    return "DNES: " + name + " (skóre " + score + "/14, směr " + dirCs + "). " + legs + " Očekávaný pohyb ±" + em + ". " + state.sentimentLine + size;
+  }
+
+  function stopReasons() {
+    const out = [];
+    if ($("stopToday").checked) {
+      const tag = eventTag(state.calToday);
+      out.push("dnes velké makro" + (tag ? " (" + tag + ")" : ""));
+    }
+    if ($("stopTomorrow").checked) {
+      const tag = eventTag(state.calTomorrow);
+      out.push("zítra velké makro" + (tag ? " (" + tag + ")" : ""));
+    }
+    if ($("stopEarnings").checked) out.push("earnings megacapů po zavření");
+    if ($("stopSession").checked) out.push("zkrácená seance nebo svátek");
+    return out;
   }
 
   function recalc() {
@@ -829,6 +990,7 @@
     const kPut = parseNum($("shortPut").value);
 
     const f2auto = state.vix1dLive && vix1d != null ? factorVix1d(vix1d, vix) : null;
+    const macroPts = factorMacro(state.macro.us10y, state.macro.uup, state.macro.uso);
     const fAuto = [
       factorVix(vix, vixPrior),
       f2auto,
@@ -836,10 +998,9 @@
       gap == null ? null : factorGap(Math.abs(gap)),
       factorTrend(er),
       factorStrike(kCall, kPut, levels, dir),
-      null
+      macroPts
     ];
-    const f = fAuto.map((a, i) => (i === 6 || state.fOver[i] ? state.fVal[i] : a));
-    if (iSafe(f, 6) && state.fVal[6] == null) f[6] = null;
+    const f = fAuto.map((a, i) => (state.fOver[i] ? state.fVal[i] : a));
 
     document.querySelectorAll(".factor").forEach((fac) => {
       const opts = fac.querySelector(".opts");
@@ -849,13 +1010,14 @@
       const tag = fac.querySelector(".tag");
       const back = fac.querySelector(".back");
       if (kind === "f") {
-        const manual = i === 6 || state.fOver[i];
-        paintOpts(opts, f[i], i === 6 && f[i] == null);
-        if (tag) tag.hidden = i === 6 ? false : !state.fOver[i];
-        if (back) back.hidden = i === 6 || !state.fOver[i];
+        const fromFile = !state.fOver[i] && f[i] != null && factorFromFile(i);
+        paintOpts(opts, f[i], f[i] == null);
+        paintTag(tag, fromFile);
+        if (back) back.hidden = !state.fOver[i];
       } else {
-        paintOpts(opts, b[i], false);
-        if (tag) tag.hidden = !state.bOver[i];
+        const fromFile = !state.bOver[i] && b[i] != null && biasFromFile(i);
+        paintOpts(opts, b[i], b[i] == null);
+        paintTag(tag, fromFile);
         if (back) back.hidden = !state.bOver[i];
       }
     });
@@ -928,24 +1090,83 @@
     if (!state.chosenTouched && dir) $("chosen").value = stratKey(dir);
 
     const vixChg = vix != null && vixPrior > 0 ? (vix / vixPrior - 1) * 100 : null;
-    $("now1").textContent = vix == null ? "" : "Teď: VIX " + fmtIn(vix, 2) + (vixChg == null ? "" : ", změna " + fmtPct(vixChg, 2)) + ".";
-    $("now2").textContent = !state.vix1dLive ? "VIX1D není živý, faktor nech prázdný, dokud ho nedoplníš." : (vix1d != null && vix > 0 ? "Teď: poměr " + fmtIn(vix1d / vix, 2) + "." : "");
-    $("now3").textContent = rv == null ? "Na RV5 je potřeba aspoň 6 uzavřených seancí." : "Teď: RV5 " + fmtIn(rv, 2) + " %, poměr " + (iv != null ? fmtIn(iv / rv, 2) : "—") + ".";
-    $("now4").textContent = gap == null ? "" : "Teď: gap " + fmtPct(gap, 2) + ".";
-    $("now5").textContent = er == null ? "Na ER je potřeba 11 uzavřených seancí." : "Teď: ER " + fmtIn(er, 2) + ".";
-    if (levels && levels.high5 != null) {
-      $("now6").textContent = "Včerejší high/low " + fmtPx(levels.prevHigh, 2) + " / " + fmtPx(levels.prevLow, 2) + ", 5denní " + fmtPx(levels.high5, 2) + " / " + fmtPx(levels.low5, 2) + ".";
-    } else $("now6").textContent = "Chybí uzavřené denní úsečky.";
-    $("now7").textContent = f[6] == null ? "Doplň ručně, samo se to nespočítá." : "";
+    const vixMiss = missNote(["vix_last", "vix_prior_close"]);
+    $("now1").textContent = ((vix == null ? "" : "Teď: VIX " + fmtIn(vix, 2) + (vixChg == null ? "" : ", změna " + fmtPct(vixChg, 2)) + ".") + (vixMiss ? " " + vixMiss : "")).trim();
+    if (state.vix1dFrozen) $("now2").textContent = "VIX1D je zmrazený, vyplň ručně.";
+    else if (!state.vix1dLive) $("now2").textContent = missNote(["vix1d_last"]) || "VIX1D není živý, faktor nech prázdný, dokud ho nedoplníš.";
+    else $("now2").textContent = vix1d != null && vix > 0 ? "Teď: poměr " + fmtIn(vix1d / vix, 2) + "." : "";
+    const barsMiss = missNote(["daily_bars"]);
+    $("now3").textContent = (rv == null ? "Na RV5 je potřeba aspoň 6 uzavřených seancí." : "Teď: RV5 " + fmtIn(rv, 2) + " %, poměr " + (iv != null ? fmtIn(iv / rv, 2) : "—") + ".") + (barsMiss ? " " + barsMiss : "");
+    const gapMiss = missNote(["es_change_pct"]);
+    $("now4").textContent = ((gap == null ? "" : "Teď: gap " + fmtPct(gap, 2) + ".") + (gapMiss ? " " + gapMiss : "")).trim();
+    $("now5").textContent = (er == null ? "Na ER je potřeba 11 uzavřených seancí." : "Teď: ER " + fmtIn(er, 2) + ".") + (barsMiss ? " " + barsMiss : "");
+    const levelBits = [];
+    if (dir === "bullish") levelBits.push(levelLine(kPut, "put", levels));
+    else if (dir === "bearish") levelBits.push(levelLine(kCall, "call", levels));
+    else {
+      levelBits.push(levelLine(kCall, "call", levels));
+      levelBits.push(levelLine(kPut, "put", levels));
+    }
+    levelBits.push("Klíčová úroveň je včerejší a pětidenní maximum a minimum.");
+    if (!levels) levelBits.unshift("Chybí uzavřené denní úsečky.");
+    $("now6").textContent = (levelBits.filter(Boolean).join(" ") + (barsMiss ? " " + barsMiss : "")).trim();
+    const macroMiss = missNote(["us10y_change_bp", "uup_change_pct", "uso_change_pct"]);
+    if (macroMiss) $("now7").textContent = macroMiss;
+    else $("now7").textContent = "10Y " + fmtBp(state.macro.us10y) + ", dolar (UUP) " + fmtPct(state.macro.uup, 2) + ", ropa (USO) " + fmtPct(state.macro.uso, 2) + ". Dolar a ropa jsou zástupné fondy UUP a USO, ne samotný index.";
 
     const smaPct = spot != null && sma ? (spot / sma - 1) * 100 : null;
-    $("bnow1").textContent = gap == null ? "" : "Teď: " + biasWord(bAuto[0]) + ".";
-    $("bnow2").textContent = sma == null ? "Na průměr je potřeba 20 uzavřených seancí." : "Teď: SMA20 " + fmtPx(sma, 2) + ", rozdíl " + fmtPct(smaPct, 2) + ".";
-    $("bnow3").textContent = vixChg == null ? "" : "Teď: " + fmtPct(vixChg, 2) + ".";
-    $("bnow4").textContent = !levels ? "" : "Teď: " + biasWord(bAuto[3]) + ".";
+    const gapBiasMiss = missNote(["es_change_pct"]);
+    $("bnow1").textContent = ((gap == null ? "" : "Teď: " + biasWord(bAuto[0]) + ".") + (gapBiasMiss ? " " + gapBiasMiss : "")).trim();
+    $("bnow2").textContent = (sma == null ? "Na průměr je potřeba 20 uzavřených seancí." : "Teď: SMA20 " + fmtPx(sma, 2) + ", rozdíl " + fmtPct(smaPct, 2) + ".") + (barsMiss ? " " + barsMiss : "");
+    const vixBiasMiss = missNote(["vix_last", "vix_prior_close"]);
+    $("bnow3").textContent = ((vixChg == null ? "" : "Teď: " + fmtPct(vixChg, 2) + ".") + (vixBiasMiss ? " " + vixBiasMiss : "")).trim();
+    $("bnow4").textContent = !levels ? (barsMiss || "Chybí uzavřené denní úsečky.") : "Teď: " + biasWord(bAuto[3]) + ".";
 
     if (st) $("moveLine").textContent = "Očekávaný pohyb (1 SD) ±" + fmtPx(Math.round(st.em), 0) + ".";
     else $("moveLine").textContent = "";
+
+    paintSrc("srcGap", !!state.filled.gap);
+    paintSrc("srcSpot", !!state.filled.spot);
+    paintSrc("srcVix", !!state.filled.vix);
+    paintSrc("srcVixPrior", !!state.filled.vixPrior);
+    paintSrc("srcVix1d", !!state.filled.vix1d && state.vix1dLive);
+    paintSrc("srcIv", !!state.filled.iv);
+    paintSrc("srcDelta", false);
+    const strikesFromFile = !!state.filled.iv && !!state.filled.spot && !state.strikeTouched && kCall != null;
+    paintSrc("srcCall", strikesFromFile);
+    paintSrc("srcPut", strikesFromFile && kPut != null);
+
+    const stops = stopReasons();
+    let box = "DNES: DOPLŇ DATA. Důvod: skóre není kompletní.";
+    let boxClass = "mid";
+    if (verdict === "Neobchodovat") {
+      box = "DNES: NEOBCHODOVAT. Důvod: " + (stops[0] || "stopka");
+      boxClass = "stop";
+    } else if (verdict === "Zkontroluj kalendář") {
+      box = "DNES: ZKONTROLUJ KALENDÁŘ. Důvod: potvrzení makra není zaškrtnuté.";
+    } else if (verdict === "Vynechat") {
+      box = "DNES: VYNECHAT. Důvod: skóre " + score + "/14 (pod 7)";
+      boxClass = "stop";
+    } else if (verdict === "Obchodovat" || verdict === "Opatrně") {
+      box = tradeLine(verdict, dir, score, delta, st, kCall, kPut);
+      boxClass = verdict === "Obchodovat" ? "go" : "mid";
+    }
+    const boxEl = $("verdictBox");
+    boxEl.textContent = box;
+    boxEl.className = "verdict-box " + boxClass;
+    const reasonBits = stops.slice();
+    [[0, "VIX je vysoký nebo prudce roste."], [1, "VIX1D je výrazně nad VIX."], [3, "Gap na futures je větší než 0,7 %."], [6, "Makro pozadí (výnos, dolar, ropa) se hýbe prudce."], [4, "Trend SPX je silně jednosměrný."], [5, "Short strike je uvnitř včerejšího rozsahu."], [2, "Očekávaný pohyb je menší než pětidenní realita."]].forEach((pair) => {
+      if (f[pair[0]] === 0) reasonBits.push(pair[1]);
+    });
+    if (state.missing.length) reasonBits.push("v market.json chybí " + state.missing.slice(0, 3).join(", ") + ".");
+    if (!reasonBits.length && verdict === "Obchodovat") reasonBits.push("Všechny sledované faktory jsou v klidu.");
+    const reasonUl = $("reasonList");
+    reasonUl.innerHTML = "";
+    reasonBits.slice(0, 3).forEach((t) => {
+      const li = document.createElement("li");
+      li.textContent = t;
+      reasonUl.appendChild(li);
+    });
 
     setNeed("delta", true);
     const forceManual = state.marketFailed;
@@ -1127,11 +1348,17 @@
     state.spxLast = data.spx_last;
     state.spxFrozen = !!data.spx_is_frozen;
     state.vixPriorDerived = !!data.vix_prior_close_derived;
+    state.vix1dFrozen = !!data.vix1d_is_frozen;
     state.vix1dFrozenPrint = data.vix1d_is_frozen ? data.vix1d_last : null;
     state.vix1dLive = data.vix1d_last != null && !data.vix1d_is_frozen;
     state.vix1dManual = false;
     state.marketFailed = false;
     state.esMeta = data;
+    clearFilled();
+    const gen = Date.parse(data.generated_at || "");
+    state.fileStamp = Number.isFinite(gen) ? zoneParts(new Date(gen)).time : "";
+    if (data.daily_bars && data.daily_bars.length) state.filled.bars = true;
+    else state.missing.push("daily_bars");
     state.ivMeta = {
       expiry: data.expiry_date,
       strike: data.iv_strike,
@@ -1140,30 +1367,82 @@
       status: data.iv_status
     };
     let gap = null;
-    if (data.es_last != null && data.es_prior_close > 0) gap = (data.es_last / data.es_prior_close - 1) * 100;
-    else if (data.es_change_pct != null) gap = data.es_change_pct;
-    if (gap != null) setAuto("gap", fmtIn(gap, 2));
+    if (data.es_change_pct != null && Number.isFinite(Number(data.es_change_pct))) gap = Number(data.es_change_pct);
+    else if (data.es_last != null && data.es_prior_close > 0) gap = (data.es_last / data.es_prior_close - 1) * 100;
+    if (gap != null) {
+      setAuto("gap", fmtIn(gap, 2));
+      state.filled.gap = true;
+    } else {
+      $("gap").value = "";
+      setNeed("gap", true);
+      state.missing.push("es_change_pct");
+    }
     if (data.spx_is_frozen && data.spx_last != null && gap != null) {
       setAuto("spot", fmtIn(data.spx_last * (1 + gap / 100), 2));
       $("spotNote").textContent = "odhad z ES";
+      state.filled.spot = true;
     } else if (data.spx_last != null) {
       state.spxFrozen = false;
       setAuto("spot", fmtIn(data.spx_last, 2));
       $("spotNote").textContent = "";
+      state.filled.spot = true;
+    } else {
+      $("spot").value = "";
+      setNeed("spot", true);
+      $("spotNote").textContent = "v market.json chybí spx_last.";
+      state.missing.push("spx_last");
     }
-    if (data.vix_last != null) setAuto("vix", fmtIn(data.vix_last, 2));
-    if (data.vix_prior_close != null) setAuto("vixPrior", fmtIn(data.vix_prior_close, 2));
+    if (data.vix_last != null) {
+      setAuto("vix", fmtIn(data.vix_last, 2));
+      state.filled.vix = true;
+    } else {
+      $("vix").value = "";
+      setNeed("vix", true);
+      state.missing.push("vix_last");
+    }
+    if (data.vix_prior_close != null) {
+      setAuto("vixPrior", fmtIn(data.vix_prior_close, 2));
+      state.filled.vixPrior = true;
+    } else {
+      $("vixPrior").value = "";
+      setNeed("vixPrior", true);
+      state.missing.push("vix_prior_close");
+    }
     if (state.vix1dLive) {
       setAuto("vix1d", fmtIn(data.vix1d_last, 2));
+      state.filled.vix1d = true;
       $("vix1dNote").textContent = "";
     } else {
       $("vix1d").value = "";
       setNeed("vix1d", true);
-      $("vix1dNote").textContent = data.vix1d_is_frozen
-        ? "VIX1D je zmrazený, faktor 2 vyplň ručně." + (data.vix1d_last != null ? " Poslední zmrazená hodnota " + fmtIn(data.vix1d_last, 2) + " se do skóre nebere." : "")
-        : "";
+      state.filled.vix1d = false;
+      if (data.vix1d_is_frozen) {
+        $("vix1dNote").textContent = "VIX1D je zmrazený, vyplň ručně." + (data.vix1d_last != null ? " Poslední zmrazená hodnota " + fmtIn(data.vix1d_last, 2) + " se do skóre nebere." : "");
+      } else {
+        $("vix1dNote").textContent = "v market.json chybí vix1d_last.";
+        state.missing.push("vix1d_last");
+      }
     }
-    if (data.atm_iv_pct != null) setAuto("iv", fmtIn(data.atm_iv_pct, 2));
+    if (data.atm_iv_pct != null) {
+      setAuto("iv", fmtIn(data.atm_iv_pct, 2));
+      state.filled.iv = true;
+    } else {
+      $("iv").value = "";
+      setNeed("iv", true);
+      state.missing.push("atm_iv_pct");
+    }
+    function numOrNull(v) {
+      if (v == null || v === "") return null;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+    state.macro.us10y = numOrNull(data.us10y_change_bp);
+    state.macro.uup = numOrNull(data.uup_change_pct);
+    state.macro.uso = numOrNull(data.uso_change_pct);
+    if (state.macro.us10y == null) state.missing.push("us10y_change_bp");
+    if (state.macro.uup == null) state.missing.push("uup_change_pct");
+    if (state.macro.uso == null) state.missing.push("uso_change_pct");
+    state.filled.macro = state.macro.us10y != null && state.macro.uup != null && state.macro.uso != null;
     state.strikeTouched = false;
     state.quotes = {
       es: data.es_last != null ? { last: data.es_last, prior: data.es_prior_close, ts: data.es_ts, monthLabel: "nejbližší kontrakt " + monthCs(data.es_contract_month) } : null,
@@ -1182,8 +1461,9 @@
       if (data.expiry_date) ok += " IV z ATM opce SPXW s expirací " + fmtIsoDate(data.expiry_date) + ".";
       msgs.push(ok);
       if (data.spx_is_frozen) msgs.push("SPX index je mimo seanci zmrazený, spot je odhad z ES (zavření × gap)");
-      if (data.vix1d_is_frozen) msgs.push("VIX1D je zmrazený, faktor 2 vyplň ručně.");
+      if (data.vix1d_is_frozen) msgs.push("VIX1D je zmrazený, vyplň ručně.");
       if (data.vix_prior_close_derived) msgs.push("Včerejší VIX je dopočítaný ze změny, přímo ho zdroj neposlal.");
+      if (state.missing.length) msgs.push("v market.json chybí " + state.missing.join(", ") + ".");
     }
     const age = Date.now() - Date.parse(data.generated_at || "");
     if (!Number.isFinite(age) || age > 30 * 60 * 1000) msgs.push("Tržní data jsou starší než 30 minut (" + fmtStamp(data.generated_at) + ").");
@@ -1284,6 +1564,8 @@
 
   function applyCalendar(data, now) {
     if (!data) {
+      state.calToday = [];
+      state.calTomorrow = [];
       setCheck("stopToday", false, "idle", "");
       setCheck("stopTomorrow", false, "idle", "");
       setCheck("stopEarnings", false, "manual", "");
@@ -1297,6 +1579,8 @@
       return miss;
     }
     const decision = calendarDecision(data, now);
+    state.calToday = data.today && data.today.events || [];
+    state.calTomorrow = data.tomorrow && data.tomorrow.events || [];
     const msgs = decision.reasons.slice();
     if (!decision.trusted) {
       setCheck("stopToday", false, "idle", "");
@@ -1325,67 +1609,37 @@
     return msgs;
   }
 
-  function stanceCs(s) {
-    if (s === "bullish") return "býčí";
-    if (s === "bearish") return "medvědí";
-    if (s === "neutral") return "neutrální";
-    return s || "—";
+  function confWord(c) {
+    if (c === "high" || c === "vysoká") return "vysoká";
+    if (c === "medium" || c === "mid" || c === "střední") return "střední";
+    if (c === "low" || c === "nízká") return "nízká";
+    const n = Number(c);
+    if (!Number.isFinite(n)) return "nízká";
+    if (n >= 0.7) return "vysoká";
+    if (n >= 0.4) return "střední";
+    return "nízká";
   }
   function applySentiment(data) {
-    state.sentiment = data && data.status === "ok" ? { direction: data.direction, score: data.score } : { direction: null, score: null };
-    const box = $("sentiment");
     const age = data ? Date.now() - Date.parse(data.generated_at || "") : Infinity;
-    const stale = !data || data.status !== "ok" || !Number.isFinite(age) || age > 24 * 3600 * 1000;
+    const dirOk = data && (data.direction === "bullish" || data.direction === "bearish" || data.direction === "neutral");
+    const stale = !data || data.status !== "ok" || !dirOk || !Number.isFinite(age) || age > 24 * 3600 * 1000;
+    const box = $("sentiment");
+    box.innerHTML = "";
+    const p = document.createElement("p");
     if (stale) {
       state.sentiment = { direction: null, score: null };
-      box.innerHTML = "";
-      const p = document.createElement("p");
-      p.textContent = "bez sentimentu";
-      p.style.cssText = "display:inline-block;padding:8px 10px;border-radius:8px;border:1px solid var(--manual);background:var(--manual-bg);color:var(--manual);font-weight:700";
+      state.sentimentLine = "Sentiment z X: nedostatek dat";
+      p.textContent = state.sentimentLine;
       box.appendChild(p);
       return data ? ["Sentiment je starší než 24 hodin, nebo není v pořádku. Skóre se nemění."] : ["Sentiment se nepodařilo načíst."];
     }
-    box.innerHTML = "";
-    const h = document.createElement("h3");
-    h.textContent = stanceCs(data.direction) + " · skóre " + fmtIn(Number(data.score), 2);
-    box.appendChild(h);
-    const c = document.createElement("p");
-    c.className = "note";
-    c.textContent = "Jistota " + fmtPct((Number(data.confidence) || 0) * 100, 0).replace("+", "") + " · " + fmtStamp(data.generated_at) + " · jen informace, do skóre se nepočítá.";
-    box.appendChild(c);
-    if (data.summary) {
-      const s = document.createElement("p");
-      s.textContent = data.summary;
-      box.appendChild(s);
-    }
-    (data.caveats || []).forEach((t) => {
-      const p = document.createElement("p");
-      p.className = "note";
-      p.textContent = t;
-      box.appendChild(p);
-    });
-    (data.posts || []).forEach((post) => {
-      const d = document.createElement("div");
-      d.className = "post";
-      const strong = document.createElement("strong");
-      strong.textContent = "@" + (post.handle || "ucet");
-      d.appendChild(strong);
-      d.appendChild(document.createTextNode(" · " + stanceCs(post.stance) + " · "));
-      if (post.link) {
-        const a = document.createElement("a");
-        a.href = post.link;
-        a.target = "_blank";
-        a.rel = "noreferrer";
-        a.textContent = "odkaz";
-        d.appendChild(a);
-      }
-      if (post.text) {
-        const t = document.createElement("div");
-        t.textContent = post.text;
-        d.appendChild(t);
-      }
-      box.appendChild(d);
-    });
+    const word = data.direction === "bullish" ? "NAHORU" : data.direction === "bearish" ? "DOLŮ" : "NEUTRÁLNĚ";
+    const x = data.accounts_for != null ? data.accounts_for : (data.matching_accounts != null ? data.matching_accounts : "—");
+    const y = data.accounts_considered != null ? data.accounts_considered : (data.accounts_total != null ? data.accounts_total : "—");
+    state.sentiment = { direction: data.direction, score: data.score };
+    state.sentimentLine = "Sentiment z X: SPX půjde " + word + " (" + x + " z " + y + " účtů, jistota " + confWord(data.confidence) + ").";
+    p.textContent = state.sentimentLine;
+    box.appendChild(p);
     return [];
   }
 
@@ -1545,6 +1799,11 @@
     state.esMeta = null;
     state.ivMeta = null;
     state.sentiment = null;
+    state.sentimentLine = "Sentiment z X: nedostatek dat";
+    state.vix1dFrozen = false;
+    state.calToday = [];
+    state.calTomorrow = [];
+    clearFilled();
     $("note").value = "";
     $("spotNote").textContent = "";
     $("vix1dNote").textContent = "";
@@ -1584,9 +1843,16 @@
   });
   ["gap", "spot", "vix", "vixPrior", "vix1d", "iv", "delta"].forEach((id) => {
     $(id).addEventListener("input", () => {
+      if (id === "gap") state.filled.gap = false;
+      if (id === "spot") state.filled.spot = false;
+      if (id === "vix") state.filled.vix = false;
+      if (id === "vixPrior") state.filled.vixPrior = false;
+      if (id === "iv") state.filled.iv = false;
       if (id === "vix1d") {
+        state.filled.vix1d = false;
         state.vix1dManual = true;
         state.vix1dLive = $("vix1d").value.trim() !== "";
+        state.vix1dFrozen = false;
       }
       recalc();
     });
@@ -1724,7 +1990,11 @@
       ["cal-true", trueFlag.trusted === true && trueFlag.bigTomorrow === true && trueFlag.bigToday === false && trueFlag.earn === null && trueFlag.stamp === "15:00 SELČ", JSON.stringify(trueFlag)],
       ["cal-partial", !partial.trusted && partial.reasons.some((r) => r.indexOf("není v pořádku") >= 0), partial.reasons.join(" | ")],
       ["cal-ny", !nyMismatch.trusted && nyMismatch.reasons.some((r) => r.indexOf("newyorský") >= 0) && nyMismatch.reasons.length === 1, nyMismatch.reasons.join(" | ")],
-      ["cal-both-false", bothFalse.trusted === true && bothFalse.bigToday === false && bothFalse.bigTomorrow === false && bothFalse.stamp === "07:02 SELČ", JSON.stringify(bothFalse)]
+      ["cal-both-false", bothFalse.trusted === true && bothFalse.bigToday === false && bothFalse.bigTomorrow === false && bothFalse.stamp === "07:02 SELČ", JSON.stringify(bothFalse)],
+      ["macro-calm", factorMacro(2, 0.1, -0.5) === 2],
+      ["macro-one", factorMacro(6, 0.1, -0.5) === 1],
+      ["macro-two", factorMacro(6, 0.5, -0.5) === 0],
+      ["macro-null", factorMacro(null, 0.1, -0.5) === null]
     ];
     return {
       ok: checks.every((c) => c[1]),
@@ -1737,12 +2007,15 @@
     invNorm: invNorm,
     strikes: strikes,
     factorVix: factorVix,
+    factorMacro: factorMacro,
     factorGap: factorGap,
     biasGap: biasGap,
     biasVix: biasVix,
     spotFromFrozen: spotFromFrozen,
     dropPartialBars: dropPartialBars,
     applyConnector: applyConnector,
+    applyMarket: applyMarket,
+    applySentiment: applySentiment,
     applyCalendar: applyCalendar,
     calendarDecision: calendarDecision,
     calendarSample: calendarSample,
