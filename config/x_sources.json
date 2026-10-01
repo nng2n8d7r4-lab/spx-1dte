@@ -1,0 +1,251 @@
+{
+  "version": 1,
+  "updated_at": "2026-10-01T11:34:15Z",
+  "frozen_until": "2026-10-31",
+  "selection_note": "Účty vybral bot na pokyn uživatele dne 2026-10-01. Seznam se mění nejvýše jednou měsíčně a každá změna se zapisuje do config/x_sources_changelog.md.",
+  "caveats": "Ověřeno: propojení handle s konkrétní osobou nebo firmou pomocí veřejných webových zdrojů (weby firem, profily autorů, podcasty, články, adresáře) a profese či zaměstnavatel podle těchto zdrojů. U @fundstrat a @jkrinskypga jde o slabší důkaz (zrcadla profilů s bio). NEOVĚŘENO: skutečný track record a přesnost předpovědí, aktuální aktivita účtů a zda nejsou smazané či suspendované (bez přístupu k X API), kdo drží pozice nebo má nezveřejněné zájmy. Typický sklon (typical_bias) je orientační podle veřejných zdrojů a může se měnit.",
+  "accounts": [
+    {
+      "handle": "@LizAnnSonders",
+      "name": "Liz Ann Sonders",
+      "reason_cs": "Hlavní investiční stratéžka Charles Schwab (Schwab Center for Financial Research); dlouholetá kariéra, komentuje šíři trhu, makro a S&P 500 s vysvětlením.",
+      "category": "strategist",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.schwab.com/learn/story/making-sense-current-economic-cycle"
+    },
+    {
+      "handle": "@RyanDetrick",
+      "name": "Ryan Detrick, CMT",
+      "reason_cs": "Hlavní tržní stratég Carson Group, CMT, přispěvatel CNBC; data o sezónnosti a historii S&P 500, výhled podložený grafy.",
+      "category": "strategist",
+      "typical_bias": "bullish",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.carsongroup.com/insights/blog/midyear-market-outlook-25/"
+    },
+    {
+      "handle": "@TimmerFidelity",
+      "name": "Jurrien Timmer",
+      "reason_cs": "Ředitel Global Macro ve Fidelity Investments; makro a valuační pohled na akciový trh s grafy a zdůvodněním.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.finnotes.org/people/jurrien-timmer"
+    },
+    {
+      "handle": "@MichaelKantro",
+      "name": "Michael Kantrowitz, CFA",
+      "reason_cs": "Hlavní investiční stratég Piper Sandler (sell-side); makro cyklus, sazby a jejich dopad na S&P 500.",
+      "category": "strategist",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.finnotes.org/people/michael-kantrowitz"
+    },
+    {
+      "handle": "@yardeni",
+      "name": "Ed Yardeni",
+      "reason_cs": "Zakladatel Yardeni Research, desítky let jako stratég; veřejné cíle pro S&P 500 a teze 'Roaring 2020s'.",
+      "category": "strategist",
+      "typical_bias": "bullish",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Yardeni Research).",
+      "weight": 0.5,
+      "verification_source": "https://yardeni.com/"
+    },
+    {
+      "handle": "@fundstrat",
+      "name": "Thomas (Tom) Lee",
+      "reason_cs": "Spoluzakladatel a šéf výzkumu Fundstrat, bývalý hlavní stratég JPMorgan; veřejné cíle S&P 500, výrazně býčí profil.",
+      "category": "strategist",
+      "typical_bias": "bullish",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Fundstrat / FS Insight / Fundstrat Direct).",
+      "weight": 0.5,
+      "verification_source": "https://twitterscore.io/twitter/fundstrat/"
+    },
+    {
+      "handle": "@MarkNewtonCMT",
+      "name": "Mark Newton, CMT",
+      "reason_cs": "Šéf technické strategie Fundstrat, 25+ let praxe (mj. Morgan Stanley); technické úrovně SPX s vysvětlením.",
+      "category": "technical",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Fundstrat).",
+      "weight": 0.5,
+      "verification_source": "https://www.thechartreport.com/mark-newton"
+    },
+    {
+      "handle": "@jkrinskypga",
+      "name": "Jonathan Krinsky, CMT",
+      "reason_cs": "Hlavní tržní technik BTIG (sell-side), CMT; technická analýza indexů a klíčové úrovně.",
+      "category": "technical",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.speakrj.com/audit/report/jkrinskypga/twitter"
+    },
+    {
+      "handle": "@StocktonKatie",
+      "name": "Katie Stockton, CMT",
+      "reason_cs": "Zakladatelka Fairlead Strategies, CMT, přispěvatelka CNBC; technické úrovně a momentum indexů.",
+      "category": "technical",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Fairlead Strategies) a správa ETF TACK.",
+      "weight": 0.5,
+      "verification_source": "https://www.fairleadstrategies.com/about"
+    },
+    {
+      "handle": "@FrankCappelleri",
+      "name": "Frank Cappelleri",
+      "reason_cs": "Zakladatel a prezident CappThesis, nezávislé firmy pro technickou analýzu; grafy a vzory na S&P 500.",
+      "category": "technical",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (CappThesis).",
+      "weight": 0.5,
+      "verification_source": "https://cappthesis.com/"
+    },
+    {
+      "handle": "@NorthmanTrader",
+      "name": "Sven Henrich",
+      "reason_cs": "Zakladatel NorthmanTrader, technická a makro analýza indexů s konkrétními úrovněmi; přispěvatel CNBC/MarketWatch.",
+      "category": "technical",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (NorthmanTrader).",
+      "weight": 0.5,
+      "verification_source": "https://www.finnotes.org/people/sven-henrich"
+    },
+    {
+      "handle": "@spotgamma",
+      "name": "SpotGamma (Brent Kochuba)",
+      "reason_cs": "Firemní účet SpotGamma, kterou založil Brent Kochuba; gamma expozice dealerů a opční toky na SPX, klíčové úrovně.",
+      "category": "options_flow",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (SpotGamma); jde o firemní účet, ne osobní.",
+      "weight": 0.5,
+      "verification_source": "https://contrarianpod.com/content/podcasts/season4/watch-for-the-bounce-in-equities-brent-kochuba-spot-gamma/"
+    },
+    {
+      "handle": "@jam_croissant",
+      "name": "Cem Karsan",
+      "reason_cs": "Zakladatel a CIO Kai Volatility Advisors, bývalý market maker v opcích na S&P 500; vanna/charm toky a pozice dealerů. Dlouhodobě medvědí (strukturální vrchol trhu), takticky se mění.",
+      "category": "volatility",
+      "typical_bias": "bearish",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://adamtaggart.substack.com/p/a-perfect-storm-of-troubles-is-brewing"
+    },
+    {
+      "handle": "@Ksidiii",
+      "name": "Kris Sidial",
+      "reason_cs": "Spoluzakladatel a co-CIO The Ambrus Group (tail-risk/volatilitní fond), dříve exotické deriváty v Bank of Montreal; krátkodobá volatilita SPX.",
+      "category": "volatility",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://riskreversal.substack.com/p/the-week-ahead-w-liz-guy-and-dan-31c"
+    },
+    {
+      "handle": "@options_insight",
+      "name": "Imran Lakha (Options Insight)",
+      "reason_cs": "Zakladatel a CEO Options Insight (opční research a vzdělávání); implikovaná volatilita a opční struktura indexů.",
+      "category": "volatility",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placené vzdělávání a research o opcích (Options Insight); firemní účet.",
+      "weight": 0.5,
+      "verification_source": "https://options-insight.com/"
+    },
+    {
+      "handle": "@QuantifiablEdgs",
+      "name": "Rob Hanna (Quantifiable Edges)",
+      "reason_cs": "Zakladatel Quantifiable Edges; kvantitativní studie historického chování SPX po specifických situacích.",
+      "category": "quant",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Quantifiable Edges).",
+      "weight": 0.5,
+      "verification_source": "https://quantifiableedges.com/"
+    },
+    {
+      "handle": "@charliebilello",
+      "name": "Charlie Bilello",
+      "reason_cs": "Hlavní tržní stratég Creative Planning; datové a historické statistiky o S&P 500, valuacích a makru.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://bilello.blog/about"
+    },
+    {
+      "handle": "@biancoresearch",
+      "name": "Jim Bianco",
+      "reason_cs": "Zakladatel Bianco Research, makro stratég s dlouhou kariérou; sazby, Fed a toky v kontextu akcií.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (Bianco Research).",
+      "weight": 0.5,
+      "verification_source": "https://www.biancoresearch.com/about-us/"
+    },
+    {
+      "handle": "@TFMkts",
+      "name": "Peter Tchir",
+      "reason_cs": "Šéf makro strategie Academy Securities; makro, úvěrové trhy a jejich dopad na akcie.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.finnotes.org/people/peter-tchir"
+    },
+    {
+      "handle": "@WarrenPies",
+      "name": "Warren Pies",
+      "reason_cs": "Zakladatel 3Fourteen Research; makro a pozicování trhu s daty a zdůvodněním.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (3Fourteen Research).",
+      "weight": 0.5,
+      "verification_source": "https://www.thechartreport.com/warren-pies"
+    },
+    {
+      "handle": "@profplum99",
+      "name": "Michael Green",
+      "reason_cs": "Hlavní stratég Simplify Asset Management; tržní struktura a vliv pasivního investování na indexy, kritický pohled.",
+      "category": "macro",
+      "typical_bias": "varies",
+      "conflict_of_interest": false,
+      "coi_note_cs": "",
+      "weight": 1.0,
+      "verification_source": "https://www.finnotes.org/people/michael-green"
+    },
+    {
+      "handle": "@jessefelder",
+      "name": "Jesse Felder",
+      "reason_cs": "Zakladatel The Felder Report, dříve Bear Stearns a spoluzakladatel hedge fondu; kontrariánský valuační pohled, veřejně medvědí k akciím.",
+      "category": "macro",
+      "typical_bias": "bearish",
+      "conflict_of_interest": true,
+      "coi_note_cs": "Hlavní byznys je placený research/předplatné (The Felder Report).",
+      "weight": 0.5,
+      "verification_source": "https://www.businessinsider.com/author/jesse-felder"
+    }
+  ]
+}
