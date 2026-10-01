@@ -234,14 +234,8 @@
     background: rgba(0, 0, 0, 0.28);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
-  .factor:has(.tag.auto) .opts button[aria-pressed="true"] {
+  .opts button[aria-pressed="true"] {
     background: #0a84ff;
-    color: #fff;
-    border-color: transparent;
-    font-weight: 700;
-  }
-  .factor:has(.tag:not(.auto)) .opts button[aria-pressed="true"] {
-    background: rgba(255, 69, 58, 0.85);
     color: #fff;
     border-color: transparent;
     font-weight: 700;
@@ -888,12 +882,13 @@
       tag.classList.remove("auto");
     }
   }
-  function paintSrc(id, fromFile) {
+  function paintSrc(id, fromFile, inputId) {
     const el = $(id);
     if (!el) return;
+    const typed = !fromFile && inputId && $(inputId).value.trim() !== "";
     el.textContent = fromFile ? ibkrLabel() : "ručně";
-    el.classList.toggle("auto", !!fromFile);
-    el.classList.toggle("manual", !fromFile);
+    el.classList.toggle("auto", fromFile || typed);
+    el.classList.toggle("manual", !fromFile && !typed);
   }
   function missNote(names) {
     const hit = names.filter((n) => state.missing.indexOf(n) >= 0);
@@ -1178,16 +1173,16 @@
     if (st) $("moveLine").textContent = "Očekávaný pohyb (1 SD) ±" + fmtPx(Math.round(st.em), 0) + ".";
     else $("moveLine").textContent = "";
 
-    paintSrc("srcGap", !!state.filled.gap);
-    paintSrc("srcSpot", !!state.filled.spot);
-    paintSrc("srcVix", !!state.filled.vix);
-    paintSrc("srcVixPrior", !!state.filled.vixPrior);
-    paintSrc("srcVix1d", !!state.filled.vix1d && state.vix1dLive);
-    paintSrc("srcIv", !!state.filled.iv);
-    paintSrc("srcDelta", false);
+    paintSrc("srcGap", !!state.filled.gap, "gap");
+    paintSrc("srcSpot", !!state.filled.spot, "spot");
+    paintSrc("srcVix", !!state.filled.vix, "vix");
+    paintSrc("srcVixPrior", !!state.filled.vixPrior, "vixPrior");
+    paintSrc("srcVix1d", !!state.filled.vix1d && state.vix1dLive, "vix1d");
+    paintSrc("srcIv", !!state.filled.iv, "iv");
+    paintSrc("srcDelta", false, "delta");
     const strikesFromFile = !!state.filled.iv && !!state.filled.spot && !state.strikeTouched && kCall != null;
-    paintSrc("srcCall", strikesFromFile);
-    paintSrc("srcPut", strikesFromFile && kPut != null);
+    paintSrc("srcCall", strikesFromFile, "shortCall");
+    paintSrc("srcPut", strikesFromFile && kPut != null, "shortPut");
 
     const stops = stopReasons();
     let box = "DNES: DOPLŇ DATA. Důvod: skóre není kompletní.";
@@ -1221,11 +1216,10 @@
       reasonUl.appendChild(li);
     });
 
-    setNeed("delta", true);
-    const forceManual = state.marketFailed;
-    setNeed("vix1d", forceManual || state.vix1dManual || !state.vix1dLive || $("vix1d").value.trim() === "");
+    setNeed("delta", $("delta").value.trim() === "");
+    setNeed("vix1d", $("vix1d").value.trim() === "");
     ["gap", "spot", "vix", "vixPrior", "iv"].forEach((id) => {
-      setNeed(id, forceManual || $(id).value.trim() === "");
+      setNeed(id, $(id).value.trim() === "");
     });
 
     state.last = {
