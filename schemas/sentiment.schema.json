@@ -10,6 +10,8 @@
     "status",
     "window_hours",
     "direction",
+    "direction_cs",
+    "one_liner_cs",
     "score",
     "confidence",
     "accounts_considered",
@@ -47,6 +49,22 @@
         "mixed",
         "insufficient"
       ]
+    },
+    "direction_cs": {
+      "description": "Směr česky, odvozený z pole direction: bullish → nahoru, bearish → dolů, neutral → neutrálně, mixed → nejasné, insufficient → nejasné. Jen popis názorů komentátorů, ne investiční doporučení.",
+      "type": "string",
+      "enum": [
+        "nahoru",
+        "dolů",
+        "neutrálně",
+        "nejasné"
+      ]
+    },
+    "one_liner_cs": {
+      "description": "Přesně jedna česká věta shrnující názory komentátorů (ne investiční doporučení). Pokud status není ok, je to přesně „Nedostatek dat pro sentiment.“ Jinak podle směru: „SPX půjde nahoru / SPX půjde dolů / SPX bude spíš v pohybu do strany / Názory na SPX jsou rozdělené (x z y účtů, důvěra nízká|střední|vysoká).“, kde y = accounts_considered a x = počet účtů s vítězným (u mixed největším) postojem.",
+      "type": "string",
+      "maxLength": 160,
+      "pattern": "^(Nedostatek dat pro sentiment\\.|(SPX půjde nahoru|SPX půjde dolů|SPX bude spíš v pohybu do strany|Názory na SPX jsou rozdělené) \\([0-9]+ z [0-9]+ účtů, důvěra (nízká|střední|vysoká)\\)\\.)$"
     },
     "score": {
       "description": "Skóre sentimentu (býčí − medvědí) / celkem × 2, zaokrouhleno na jedno desetinné místo; rozsah −2 až 2. Povolené hodnoty jsou vyjmenované (krok 0,1), protože multipleOf 0.1 s desetinnými čísly v plovoucí čárce chybně odmítá např. 0.3 nebo 0.7.",
@@ -167,5 +185,297 @@
       "description": "Upozornění a omezení dat pro tento běh (česky).",
       "type": "string"
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "not": {
+          "properties": {
+            "status": {
+              "const": "ok"
+            }
+          },
+          "required": [
+            "status"
+          ]
+        }
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "const": "Nedostatek dat pro sentiment."
+          }
+        }
+      },
+      "description": "Pokud status není ok, věta je vždy „Nedostatek dat pro sentiment.“"
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "bullish"
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "direction_cs": {
+            "const": "nahoru"
+          }
+        }
+      },
+      "description": "Mapování směru: bullish → nahoru."
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "bearish"
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "direction_cs": {
+            "const": "dolů"
+          }
+        }
+      },
+      "description": "Mapování směru: bearish → dolů."
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "neutral"
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "direction_cs": {
+            "const": "neutrálně"
+          }
+        }
+      },
+      "description": "Mapování směru: neutral → neutrálně."
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "mixed"
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "direction_cs": {
+            "const": "nejasné"
+          }
+        }
+      },
+      "description": "Mapování směru: mixed → nejasné."
+    },
+    {
+      "if": {
+        "properties": {
+          "direction": {
+            "const": "insufficient"
+          }
+        },
+        "required": [
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "direction_cs": {
+            "const": "nejasné"
+          }
+        }
+      },
+      "description": "Mapování směru: insufficient → nejasné."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "direction": {
+            "const": "bullish"
+          }
+        },
+        "required": [
+          "status",
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "^SPX půjde nahoru \\("
+          }
+        }
+      },
+      "description": "Při status ok a směru bullish začíná věta „SPX půjde nahoru (“."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "direction": {
+            "const": "bearish"
+          }
+        },
+        "required": [
+          "status",
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "^SPX půjde dolů \\("
+          }
+        }
+      },
+      "description": "Při status ok a směru bearish začíná věta „SPX půjde dolů (“."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "direction": {
+            "const": "neutral"
+          }
+        },
+        "required": [
+          "status",
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "^SPX bude spíš v pohybu do strany \\("
+          }
+        }
+      },
+      "description": "Při status ok a směru neutral začíná věta „SPX bude spíš v pohybu do strany (“."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "direction": {
+            "const": "mixed"
+          }
+        },
+        "required": [
+          "status",
+          "direction"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "^Názory na SPX jsou rozdělené \\("
+          }
+        }
+      },
+      "description": "Při status ok a směru mixed začíná věta „Názory na SPX jsou rozdělené (“."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "confidence": {
+            "const": "low"
+          }
+        },
+        "required": [
+          "status",
+          "confidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "důvěra nízká\\)\\.$"
+          }
+        }
+      },
+      "description": "Při status ok odpovídá slovo důvěry poli confidence: low → nízká."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "confidence": {
+            "const": "medium"
+          }
+        },
+        "required": [
+          "status",
+          "confidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "důvěra střední\\)\\.$"
+          }
+        }
+      },
+      "description": "Při status ok odpovídá slovo důvěry poli confidence: medium → střední."
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "confidence": {
+            "const": "high"
+          }
+        },
+        "required": [
+          "status",
+          "confidence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "one_liner_cs": {
+            "pattern": "důvěra vysoká\\)\\.$"
+          }
+        }
+      },
+      "description": "Při status ok odpovídá slovo důvěry poli confidence: high → vysoká."
+    }
+  ]
 }

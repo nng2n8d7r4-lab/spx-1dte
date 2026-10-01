@@ -33,6 +33,35 @@ Bot shrnuje, co si vybraní komentátoři na X myslí o vývoji SPX **dnes a v p
 6. Skóre se počítá jako **(býčí − medvědí) / celkem × 2** a zaokrouhluje se na jedno desetinné místo, takže leží v rozsahu −2 až 2.
 7. Účty se střetem zájmů (`conflict_of_interest: true`, typicky prodej předplatného nebo signálů) mají váhu **0,5**, ostatní 1,0.
 
+## Pole `direction_cs` a `one_liner_cs`
+
+Obě pole jsou povinná a slouží k rychlému přečtení výsledku v češtině. **Věty jen shrnují, co píšou sledovaní komentátoři na X. Nejsou to předpovědi bota ani investiční doporučení.**
+
+**`direction_cs`** – směr česky, odvozený z pole `direction`:
+
+| `direction` | `direction_cs` |
+|---|---|
+| `bullish` | nahoru |
+| `bearish` | dolů |
+| `neutral` | neutrálně |
+| `mixed` | nejasné |
+| `insufficient` | nejasné |
+
+**`one_liner_cs`** – přesně jedna česká věta:
+
+- Pokud `status` není `ok`, je věta vždy přesně: „Nedostatek dat pro sentiment.“
+- Pokud je `status` `ok`, věta závisí na směru:
+  - `bullish`: „SPX půjde nahoru (x z y účtů, důvěra …).“
+  - `bearish`: „SPX půjde dolů (x z y účtů, důvěra …).“
+  - `neutral`: „SPX bude spíš v pohybu do strany (x z y účtů, důvěra …).“
+  - `mixed`: „Názory na SPX jsou rozdělené (x z y účtů, důvěra …).“
+
+Přitom `y` = `accounts_considered` a `x` = počet účtů s vítězným postojem (u `mixed` počet účtů v největší skupině). Slovo důvěry odpovídá poli `confidence`: `low` → nízká, `medium` → střední, `high` → vysoká.
+
+Příklad: „SPX půjde nahoru (8 z 12 účtů, důvěra střední).“ znamená, že 8 z 12 vyhodnocených komentátorů psalo býčí názor. Neznamená to, že SPX skutečně poroste.
+
+Schéma `schemas/sentiment.schema.json` hlídá mapování směru, tvar věty, slovo důvěry a pravidlo pro `status` jiný než `ok`. Nekontroluje, zda čísla `x` a `y` odpovídají datům; to musí zajistit bot.
+
 ## Význam stavů (`status`)
 
 - `ok` – dost dat, výsledek je úplný.
