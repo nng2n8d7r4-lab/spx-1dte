@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-10-01T11:24:57Z",
-  "status": "partial",
+  "generated_at": "2026-10-01T11:43:25Z",
+  "status": "unavailable",
   "window_hours": 24,
   "direction": "insufficient",
   "score": 0,
   "confidence": "low",
   "accounts_considered": 0,
-  "summary": "Testovací běh. Seznam schválených účtů (config/x_sources.json) je prázdný a přístup k X API zatím není nastaven, proto nebyly vyhodnoceny žádné příspěvky a směr nelze určit.",
+  "summary": "Data z X nejsou k dispozici: přístupový klíč k X API zatím není nastaven, takže příspěvky 22 schválených účtů nebylo možné načíst. Směr trhu proto nelze určit.",
   "top_posts": [],
-  "caveats": "Žádná data z X: 0 schválených účtů (minimum pro stav ok je 5) a chybí přístupový klíč k X API. Skóre 0 je jen výchozí hodnota, ne naměřený sentiment. Vygenerováno 13:24 SELČ."
+  "caveats": "Nebyl přečten žádný příspěvek. Skóre 0 je jen výchozí hodnota, ne naměřený sentiment. Seznam zdrojů (22 účtů) je připraven, chybí pouze přístup k X API. Vygenerováno 13:43 SELČ."
 }
