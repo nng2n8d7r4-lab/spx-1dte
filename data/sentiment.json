@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-10-01T10:35:15.138Z",
+  "status": "ok",
+  "sample": true,
+  "direction": "neutral",
+  "score": 0,
+  "confidence": 0.2,
+  "summary": "Ukázkový sentiment, ne živý sběr z X. Na skóre ani strategii to nemá vliv.",
+  "caveats": [
+    "Ukázková data. Predikční hodnotu ověř až v deníku, až budou uzavřené dny."
+  ],
+  "posts": [
+    {
+      "handle": "ukazka",
+      "stance": "neutral",
+      "link": "https://x.com",
+      "text": "Ukázkový příspěvek, ne názor reálného účtu."
+    }
+  ]
+}
