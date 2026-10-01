@@ -17,7 +17,8 @@
     "accounts_considered",
     "summary",
     "top_posts",
-    "caveats"
+    "caveats",
+    "accounts_for"
   ],
   "properties": {
     "generated_at": {
@@ -126,6 +127,11 @@
     },
     "accounts_considered": {
       "description": "Počet účtů, jejichž příspěvky byly vyhodnoceny.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "accounts_for": {
+      "description": "Počet účtů s vítězným postojem (u mixed počet účtů v největší skupině). Kalkulačka z něj skládá větu „x z y účtů“.",
       "type": "integer",
       "minimum": 0
     },
