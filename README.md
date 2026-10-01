@@ -59,7 +59,7 @@ Spot: když `spx_is_frozen`, `spx_last × (1 + es_změna/100)`, jinak `spx_last`
 
 `generated_at`, `status` (`ok`), `sample`, `macro_today`, `macro_tomorrow`, `megacap_earnings_today`, `shortened_session`, `events[]` s `name` a `name_cs`.
 
-Když je soubor z dneška a `status` je `ok`, stopky se předvyplní. Obě potvrzení „žádná velká makra“ musíš zaškrtnout sám.
+Když je soubor z dnešního pražského dne, ne starší než 10 hodin, `status` je `ok`, `cross_checked` je `true`, `today.date` je dnešní den v `America/New_York` a `big_macro_today` i `big_macro_tomorrow` jsou boolean, aplikace sama zaškrtne potvrzení (příznak false) nebo stopku (příznak true). Jinak se nesaškrtne nic a potvrzení zůstanou oranžová. Earnings a zkrácená seance se doplní jen když je jejich příznak boolean, jinak zůstanou oranžové. Skóre se nemění.
 
 ## Schéma `data/sentiment.json`
 
