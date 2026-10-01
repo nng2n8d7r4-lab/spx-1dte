@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/nng2n8d7r4-lab/spx-1dte/blob/main/schemas/sentiment.schema.json",
+  "title": "Sentiment komentátorů na X k SPX",
+  "description": "Schéma souboru data/sentiment.json: shrnutí názorů vybraných komentátorů na X o směru S&P 500 (SPX/ES) za posledních 24 hodin. Nejde o investiční doporučení.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "generated_at",
+    "status",
+    "window_hours",
+    "direction",
+    "score",
+    "confidence",
+    "accounts_considered",
+    "summary",
+    "top_posts",
+    "caveats"
+  ],
+  "properties": {
+    "generated_at": {
+      "description": "Čas vygenerování v UTC ve formátu ISO 8601, zakončený písmenem Z (např. 2026-10-01T12:30:00Z).",
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$"
+    },
+    "status": {
+      "description": "Stav běhu: ok = dost dat, partial = neúplná data (méně než 5 kvalifikovaných účtů), unavailable = data nebyla k dispozici (např. chyba X API).",
+      "type": "string",
+      "enum": [
+        "ok",
+        "partial",
+        "unavailable"
+      ]
+    },
+    "window_hours": {
+      "description": "Délka sledovaného okna v hodinách; vždy 24.",
+      "const": 24
+    },
+    "direction": {
+      "description": "Převažující směr názorů: bullish = býčí, bearish = medvědí, neutral = neutrální, mixed = názory rozdělené, insufficient = málo dat.",
+      "type": "string",
+      "enum": [
+        "bullish",
+        "bearish",
+        "neutral",
+        "mixed",
+        "insufficient"
+      ]
+    },
+    "score": {
+      "description": "Skóre sentimentu (býčí − medvědí) / celkem × 2, zaokrouhleno na jedno desetinné místo; rozsah −2 až 2. Povolené hodnoty jsou vyjmenované (krok 0,1), protože multipleOf 0.1 s desetinnými čísly v plovoucí čárce chybně odmítá např. 0.3 nebo 0.7.",
+      "type": "number",
+      "minimum": -2,
+      "maximum": 2,
+      "enum": [
+        -2,
+        -1.9,
+        -1.8,
+        -1.7,
+        -1.6,
+        -1.5,
+        -1.4,
+        -1.3,
+        -1.2,
+        -1.1,
+        -1,
+        -0.9,
+        -0.8,
+        -0.7,
+        -0.6,
+        -0.5,
+        -0.4,
+        -0.3,
+        -0.2,
+        -0.1,
+        0,
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5,
+        0.6,
+        0.7,
+        0.8,
+        0.9,
+        1,
+        1.1,
+        1.2,
+        1.3,
+        1.4,
+        1.5,
+        1.6,
+        1.7,
+        1.8,
+        1.9,
+        2
+      ]
+    },
+    "confidence": {
+      "description": "Míra jistoty odhadu: low = nízká, medium = střední, high = vysoká.",
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "accounts_considered": {
+      "description": "Počet účtů, jejichž příspěvky byly vyhodnoceny.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "summary": {
+      "description": "Krátké shrnutí v češtině, nejvýše 400 znaků.",
+      "type": "string",
+      "maxLength": 400
+    },
+    "top_posts": {
+      "description": "Nejrelevantnější příspěvky, ze kterých shrnutí vychází.",
+      "type": "array",
+      "items": {
+        "description": "Jeden příspěvek z X.",
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "handle",
+          "stance",
+          "posted_at",
+          "url",
+          "why_relevant"
+        ],
+        "properties": {
+          "handle": {
+            "description": "Handle autora na X včetně zavináče (např. @LizAnnSonders).",
+            "type": "string",
+            "pattern": "^@"
+          },
+          "stance": {
+            "description": "Postoj příspěvku k SPX/ES: bullish = býčí, bearish = medvědí, neutral = neutrální.",
+            "type": "string",
+            "enum": [
+              "bullish",
+              "bearish",
+              "neutral"
+            ]
+          },
+          "posted_at": {
+            "description": "Čas zveřejnění příspěvku (ISO 8601 date-time).",
+            "type": "string",
+            "format": "date-time"
+          },
+          "url": {
+            "description": "Odkaz na příspěvek na x.com nebo twitter.com.",
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https://(x|twitter)\\.com/"
+          },
+          "why_relevant": {
+            "description": "Proč je příspěvek relevantní (česky, stručně).",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "caveats": {
+      "description": "Upozornění a omezení dat pro tento běh (česky).",
+      "type": "string"
+    }
+  }
+}
