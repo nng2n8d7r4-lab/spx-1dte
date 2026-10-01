@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-01T12:02:02Z",
+  "generated_at": "2026-10-01T12:32:28Z",
   "status": "unavailable",
   "window_hours": 24,
   "direction": "insufficient",
@@ -8,7 +8,7 @@
   "score": 0,
   "confidence": "low",
   "accounts_considered": 0,
-  "summary": "Data z X nejsou k dispozici: přístupový klíč k X API zatím není nastaven, takže příspěvky 22 schválených účtů nebylo možné načíst. Směr trhu proto nelze určit.",
+  "summary": "Data z X nejsou k dispozici: proměnná prostředí X_BEARER_TOKEN chybí, takže API nevrátilo žádné příspěvky ze 22 sledovaných účtů. Směr SPX proto nelze určit.",
   "top_posts": [],
-  "caveats": "Nebyl přečten žádný příspěvek. Skóre 0 je jen výchozí hodnota, ne naměřený sentiment. Seznam zdrojů (22 účtů) je připraven, chybí pouze přístup k X API. Vygenerováno 14:02 SELČ."
+  "caveats": "Nebyl přečten žádný příspěvek. Skóre 0 je výchozí hodnota, ne naměřený sentiment. Pro reálný výsledek je potřeba nastavit X_BEARER_TOKEN (nebo dokončit dohodnutý přístup k X). Vygenerováno 14:32 SELČ."
 }
